@@ -1,0 +1,14 @@
+D:\FH\3.-Semester\Software Engineering\MTCG\MTCG\bin\Debug\net7.0\MTCG.exe
+D:\FH\3.-Semester\Software Engineering\MTCG\MTCG\bin\Debug\net7.0\MTCG.deps.json
+D:\FH\3.-Semester\Software Engineering\MTCG\MTCG\bin\Debug\net7.0\MTCG.runtimeconfig.json
+D:\FH\3.-Semester\Software Engineering\MTCG\MTCG\bin\Debug\net7.0\MTCG.dll
+D:\FH\3.-Semester\Software Engineering\MTCG\MTCG\bin\Debug\net7.0\MTCG.pdb
+D:\FH\3.-Semester\Software Engineering\MTCG\MTCG\obj\Debug\net7.0\MTCG.GeneratedMSBuildEditorConfig.editorconfig
+D:\FH\3.-Semester\Software Engineering\MTCG\MTCG\obj\Debug\net7.0\MTCG.AssemblyInfoInputs.cache
+D:\FH\3.-Semester\Software Engineering\MTCG\MTCG\obj\Debug\net7.0\MTCG.AssemblyInfo.cs
+D:\FH\3.-Semester\Software Engineering\MTCG\MTCG\obj\Debug\net7.0\MTCG.csproj.CoreCompileInputs.cache
+D:\FH\3.-Semester\Software Engineering\MTCG\MTCG\obj\Debug\net7.0\MTCG.dll
+D:\FH\3.-Semester\Software Engineering\MTCG\MTCG\obj\Debug\net7.0\refint\MTCG.dll
+D:\FH\3.-Semester\Software Engineering\MTCG\MTCG\obj\Debug\net7.0\MTCG.pdb
+D:\FH\3.-Semester\Software Engineering\MTCG\MTCG\obj\Debug\net7.0\MTCG.genruntimeconfig.cache
+D:\FH\3.-Semester\Software Engineering\MTCG\MTCG\obj\Debug\net7.0\ref\MTCG.dll

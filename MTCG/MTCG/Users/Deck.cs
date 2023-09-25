@@ -9,7 +9,7 @@ namespace MTCG.Users
 {
     internal class Deck : ICardList
     {
-        private List<Card>? Cards { get; }
+        public List<Card>? Cards { get; }
 
         public void AddCards(Card c)
         {

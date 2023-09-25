@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "D:\\FH\\GitRepo\\3.Semester\\SWEN\\MTCG\\MTCG\\MTCG.csproj": {}
+    "D:\\FH\\GitRepo\\Swen1-MTCG\\MTCG\\MTCG\\MTCG.csproj": {}
   },
   "projects": {
-    "D:\\FH\\GitRepo\\3.Semester\\SWEN\\MTCG\\MTCG\\MTCG.csproj": {
+    "D:\\FH\\GitRepo\\Swen1-MTCG\\MTCG\\MTCG\\MTCG.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\FH\\GitRepo\\3.Semester\\SWEN\\MTCG\\MTCG\\MTCG.csproj",
+        "projectUniqueName": "D:\\FH\\GitRepo\\Swen1-MTCG\\MTCG\\MTCG\\MTCG.csproj",
         "projectName": "MTCG",
-        "projectPath": "D:\\FH\\GitRepo\\3.Semester\\SWEN\\MTCG\\MTCG\\MTCG.csproj",
+        "projectPath": "D:\\FH\\GitRepo\\Swen1-MTCG\\MTCG\\MTCG\\MTCG.csproj",
         "packagesPath": "C:\\Users\\flori\\.nuget\\packages\\",
-        "outputPath": "D:\\FH\\GitRepo\\3.Semester\\SWEN\\MTCG\\MTCG\\obj\\",
+        "outputPath": "D:\\FH\\GitRepo\\Swen1-MTCG\\MTCG\\MTCG\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\flori\\AppData\\Roaming\\NuGet\\NuGet.Config",

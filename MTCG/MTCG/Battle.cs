@@ -13,5 +13,7 @@ namespace MTCG
             //Shadow-> 10% vom Damage gehealt
             //Demacia -> Strongest 30% mor Damage
         */
+
+        public StringBuilder? BattleLog { get; protected set; }
     }
 }

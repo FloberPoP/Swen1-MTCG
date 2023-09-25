@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MTCG.Users;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace MTCG
 {
-    internal class UI
+    internal static class UI
     {
         public static string GetStringInput()
         {
@@ -36,6 +37,12 @@ namespace MTCG
         {
             Console.Write("\nPasswor: ");
             return Console.ReadLine();
+        }
+
+        public static string ShowDeck(Deck d) 
+        {
+            
+            return "";
         }
     }
 }

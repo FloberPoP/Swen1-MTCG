@@ -11,6 +11,6 @@ namespace MTCG.Cards
         int MaxHealth { get; set; }
         int CurrentHealth { get; set; }
 
-        public void UpdateHealth();
+        public void UpdateHealth(int damage);
     }
 }

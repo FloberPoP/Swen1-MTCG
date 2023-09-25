@@ -19,7 +19,12 @@ namespace MTCG.Users
 
         public void ManageDeck()
         {
+            if(Deck != null && Deck.Cards != null) {
+                //Deck.Cards.Clear();
+                //Deck.Cards.Count() == 4
 
+                
+            }
         }
 
         public void BuyCards()
@@ -43,6 +48,11 @@ namespace MTCG.Users
         }
 
         public void ShowStats()
+        {
+
+        }
+
+        public void RequestDeal()
         {
 
         }

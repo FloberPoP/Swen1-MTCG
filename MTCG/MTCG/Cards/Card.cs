@@ -15,6 +15,7 @@ namespace MTCG.Cards
     {
         public required string Name { get; set; }
         public required int Damage { get; set; }
+        public required int ManaCosts { get; set; }
         public required ERegions Regions { get; set; }
     }
 }

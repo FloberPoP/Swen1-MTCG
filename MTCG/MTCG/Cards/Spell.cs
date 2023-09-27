@@ -8,6 +8,6 @@ namespace MTCG.Cards
 {
     internal class Spell : Card
     {
-
+        
     }
 }

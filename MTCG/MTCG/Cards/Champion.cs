@@ -10,10 +10,12 @@ namespace MTCG.Cards
     {
         public int MaxHealth { get; set; }
         public int CurrentHealth { get; set; }
+        public bool Deaed { get; set; }
+        public bool Stuned { get; set; }
 
-        public void UpdateHealth()
+        public void UpdateHealth(int value)
         {
-
+            CurrentHealth += value;
         }
     }
 }

@@ -6,8 +6,13 @@ using System.Threading.Tasks;
 
 namespace MTCG.Cards
 {
+    public enum ESpellType { DAMAGE, HEAL, STUN };
+
     internal class Spell : Card
     {
-        
+        public void CastAbility()
+        {
+
+        }
     }
 }

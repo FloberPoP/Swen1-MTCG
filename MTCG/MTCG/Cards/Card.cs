@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -23,15 +24,13 @@ namespace MTCG.Cards
             switch(eRegions)
             {
                 case ERegions.VOID:
-                    break;
+                    return (Regions == ERegions.SHADOWISLES) ? Damage / 2 : (Regions == ERegions.DEMACIA) ? Damage * 2 : Damage;
                 case ERegions .SHADOWISLES:
-                    break;
+                    return (Regions == ERegions.DEMACIA) ? Damage / 2 : (Regions == ERegions.VOID) ? Damage * 2 : Damage;
                 case ERegions .DEMACIA:
-                    break;
-                default:
-                    break;
+                    return (Regions == ERegions.VOID) ? Damage / 2 : (Regions == ERegions.SHADOWISLES) ? Damage * 2 : Damage;
             }
-            return Damage;
+            return -1;
         }
     }
 }

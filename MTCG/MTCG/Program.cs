@@ -6,7 +6,6 @@
         {
             GameController controller = new GameController();
             controller.StartGame();
-            Console.WriteLine("Ich bin ein Pokemon Spiel");
         }
     }
 }

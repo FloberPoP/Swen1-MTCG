@@ -3,7 +3,7 @@
   <Class Name="MTCG.Cards.Card">
     <Position X="4" Y="0.75" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAAAQCAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <HashCode>AAAAAQCAAAAAAAIAAAAAAAQAAAAAAAAAAAAAAgAAAAA=</HashCode>
       <FileName>Cards\Card.cs</FileName>
     </TypeIdentifier>
     <ShowAsAssociation>
@@ -49,7 +49,7 @@
     <Lollipop Position="0.2" />
   </Class>
   <Class Name="MTCG.Users.User">
-    <Position X="12.25" Y="4" Width="1.5" />
+    <Position X="12.25" Y="4.75" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AEAAAAAAAAAAAAAAAQAACAIAgAAQAEACAABYAAAAAAA=</HashCode>
       <FileName>Users\User.cs</FileName>
@@ -83,7 +83,7 @@
   <Class Name="MTCG.UI">
     <Position X="6" Y="5.5" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <HashCode>AQAABAAAAAAAAAgAAAAACAAAAAAQAAAAAAAAAAAAAAA=</HashCode>
       <FileName>UI.cs</FileName>
     </TypeIdentifier>
   </Class>
@@ -97,7 +97,7 @@
   <Enum Name="MTCG.Cards.ERegions">
     <Position X="7" Y="0.75" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAEAAAAAAAAAAAAQAAIAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <HashCode>AAEAAAAAAAAAAAEAAAIAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
       <FileName>Cards\Card.cs</FileName>
     </TypeIdentifier>
   </Enum>

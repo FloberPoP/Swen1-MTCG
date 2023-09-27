@@ -8,6 +8,11 @@ namespace MTCG
 {
     internal class UI
     {
+        public static void ShoeMenu()
+        {
+            Console.WriteLine("Welcome to the Game");
+        }
+
         public static string GetStringInput()
         {
             string input;

@@ -1,19 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <ClassDiagram MajorVersion="1" MinorVersion="1">
-  <Class Name="MTCG.Cards.Card">
-    <Position X="4" Y="0.75" Width="1.5" />
-    <TypeIdentifier>
-      <HashCode>AAAAAQCAAAAAAAIAAAAAAAQAAAAAAAAAAAAAAgAAAAA=</HashCode>
-      <FileName>Cards\Card.cs</FileName>
-    </TypeIdentifier>
-    <ShowAsAssociation>
-      <Property Name="Regions" />
-    </ShowAsAssociation>
-  </Class>
   <Class Name="MTCG.Cards.Champion">
     <Position X="0.5" Y="3.25" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAACAAAAAAACAAAAAAAAAQAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <HashCode>AAAACAAAAAAACAAAAAAAAAQAAAAAAAAAEAAAAAABAAA=</HashCode>
       <FileName>Cards\Champion.cs</FileName>
     </TypeIdentifier>
     <Lollipop Position="0.2" />
@@ -21,7 +11,7 @@
   <Class Name="MTCG.Cards.Spell">
     <Position X="4.75" Y="3" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <HashCode>AAAAAAAAAQAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAA=</HashCode>
       <FileName>Cards\Spell.cs</FileName>
     </TypeIdentifier>
   </Class>

@@ -10,9 +10,21 @@ namespace MTCG.Cards
 
     internal class Spell : Card
     {
-        public void CastAbility()
-        {
 
+        public ESpellType SpellType {  get; set; }
+
+        public int CastAbility()
+        {
+            switch(SpellType)
+            {
+                case ESpellType.DAMAGE:
+                    return Damage;
+                case ESpellType.HEAL:
+                    return Damage * -1;
+                case ESpellType.STUN:
+                    return 0;
+            }
+            return int.MaxValue;
         }
     }
 }

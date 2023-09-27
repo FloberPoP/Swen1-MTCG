@@ -14,6 +14,14 @@ namespace MTCG.Cards
 
     internal class Card
     {
+        public Card(string name, int damage, int manaCosts, ERegions regions)
+        {
+            Name = name;
+            Damage = damage;
+            ManaCosts = manaCosts;
+            Regions = regions;
+        }
+
         public required string Name { get; set; }
         public required int Damage { get; set; }
         public required int ManaCosts { get; set; }
@@ -30,7 +38,7 @@ namespace MTCG.Cards
                 case ERegions .DEMACIA:
                     return (Regions == ERegions.VOID) ? Damage / 2 : (Regions == ERegions.SHADOWISLES) ? Damage * 2 : Damage;
             }
-            return -1;
+            return int.MaxValue;
         }
     }
 }

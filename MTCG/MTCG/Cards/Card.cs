@@ -17,5 +17,21 @@ namespace MTCG.Cards
         public required int Damage { get; set; }
         public required int ManaCosts { get; set; }
         public required ERegions Regions { get; set; }
+
+        public int DamageCalculation(ERegions eRegions)
+        {
+            switch(eRegions)
+            {
+                case ERegions.VOID:
+                    break;
+                case ERegions .SHADOWISLES:
+                    break;
+                case ERegions .DEMACIA:
+                    break;
+                default:
+                    break;
+            }
+            return Damage;
+        }
     }
 }

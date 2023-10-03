@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MTCG.Users;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,9 +9,9 @@ namespace MTCG
 {
     internal class GameController
     {
-        public void StartGame()
+        public void StartGame(User u)
         {
-
+            UI.ShowMenu(u);
         }
     }
 }

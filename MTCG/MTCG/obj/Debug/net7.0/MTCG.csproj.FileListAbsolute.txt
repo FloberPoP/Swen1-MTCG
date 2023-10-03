@@ -19,3 +19,10 @@ D:\FH\GitRepo\Swen1-MTCG\MTCG\MTCG\obj\Debug\net7.0\MTCG.csproj.CoreCompileInput
 D:\FH\GitRepo\Swen1-MTCG\MTCG\MTCG\obj\Debug\net7.0\MTCG.dll
 D:\FH\GitRepo\Swen1-MTCG\MTCG\MTCG\obj\Debug\net7.0\refint\MTCG.dll
 D:\FH\GitRepo\Swen1-MTCG\MTCG\MTCG\obj\Debug\net7.0\MTCG.pdb
+D:\FH\GitRepo\Swen1-MTCG\MTCG\MTCG\bin\Debug\net7.0\MTCG.exe
+D:\FH\GitRepo\Swen1-MTCG\MTCG\MTCG\bin\Debug\net7.0\MTCG.deps.json
+D:\FH\GitRepo\Swen1-MTCG\MTCG\MTCG\bin\Debug\net7.0\MTCG.runtimeconfig.json
+D:\FH\GitRepo\Swen1-MTCG\MTCG\MTCG\bin\Debug\net7.0\MTCG.dll
+D:\FH\GitRepo\Swen1-MTCG\MTCG\MTCG\bin\Debug\net7.0\MTCG.pdb
+D:\FH\GitRepo\Swen1-MTCG\MTCG\MTCG\obj\Debug\net7.0\MTCG.genruntimeconfig.cache
+D:\FH\GitRepo\Swen1-MTCG\MTCG\MTCG\obj\Debug\net7.0\ref\MTCG.dll

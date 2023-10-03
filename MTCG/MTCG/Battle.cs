@@ -1,4 +1,6 @@
-﻿using System;
+﻿using MTCG.Users;
+using MTCG.Cards;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -15,5 +17,15 @@ namespace MTCG
         */
 
         public StringBuilder? BattleLog { get; protected set; }
+
+        public void BattleStart(User c1, User c2)
+        {
+
+        }
+
+        private void ShowBattlefield(User c1, User c2)
+        {
+            //UI.ShowBattlefield(c1, c2);
+        }
     }
 }

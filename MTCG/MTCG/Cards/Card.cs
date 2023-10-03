@@ -14,10 +14,10 @@ namespace MTCG.Cards
 
     internal abstract class Card
     {
-        public required string Name { get; set; }
-        public required int Damage { get; set; }
-        public required int ManaCost { get; set; }
-        public required ERegions Region { get; set; }
+        public string Name { get; set; }
+        public int Damage { get; set; }
+        public int ManaCost { get; set; }
+        public ERegions Region { get; set; }
         public Card(string name, int damage, int manaCosts, ERegions regions)
         {
             Name = name;

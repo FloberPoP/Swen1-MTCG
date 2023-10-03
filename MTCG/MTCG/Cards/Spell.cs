@@ -10,6 +10,10 @@ namespace MTCG.Cards
 
     internal class Spell : Card
     {
+        public Spell(string name, int damage, int manaCosts, ERegions region) : base(name, damage, manaCosts, region)
+        {
+
+        }
 
         public ESpellType SpellType {  get; set; }
 

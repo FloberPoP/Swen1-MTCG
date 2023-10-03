@@ -10,11 +10,6 @@ namespace MTCG.Cards
     {
         int MaxHealth { get; set; }
         int CurrentHealth { get; set; }
-
-<<<<<<< HEAD
-        public void UpdateHealth(int damage);
-=======
         public void UpdateHealth(int value);
->>>>>>> CardsImplementation
     }
 }

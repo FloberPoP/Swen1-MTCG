@@ -11,8 +11,8 @@ namespace MTCG.Cards
 {
     internal class Champion : Card, IHealth
     {
-        public Champion(string name, int damage, ERegions region, int maxHealth, int currentHealth)
-        : base(name, damage, region)
+        public Champion(string name, int damage, int manaCost, ERegions region, int maxHealth, int currentHealth)
+        : base(name, damage, manaCost, region)
         {
             MaxHealth = maxHealth;
             CurrentHealth = currentHealth;
@@ -21,22 +21,14 @@ namespace MTCG.Cards
 
         public int MaxHealth { get; set; }
         public int CurrentHealth { get; set; }
-<<<<<<< HEAD
         public bool IsDead { get; private set; }
 
+        public bool Stuned { get; set; }
         public void UpdateHealth(int enemyDamage)
         {
             CurrentHealth += enemyDamage;
-            if(CurrentHealth <= 0)
+            if (CurrentHealth <= 0)
                 IsDead = true;
-=======
-        public bool Deaed { get; set; }
-        public bool Stuned { get; set; }
-
-        public void UpdateHealth(int value)
-        {
-            CurrentHealth += value;
->>>>>>> CardsImplementation
         }
     }
 }

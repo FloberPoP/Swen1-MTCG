@@ -14,69 +14,31 @@ namespace MTCG.Cards
 
     internal abstract class Card
     {
-<<<<<<< HEAD
-        public Card(string name, int damage, ERegions region)
-        {
-            Name = name;
-            Damage = damage;
-            Region = region;
-=======
+        public required string Name { get; set; }
+        public required int Damage { get; set; }
+        public required int ManaCost { get; set; }
+        public required ERegions Region { get; set; }
         public Card(string name, int damage, int manaCosts, ERegions regions)
         {
             Name = name;
             Damage = damage;
-            ManaCosts = manaCosts;
-            Regions = regions;
->>>>>>> CardsImplementation
+            ManaCost = manaCosts;
+            Region = regions;
         }
-
-        public required string Name { get; set; }
-        public required int Damage { get; set; }
-<<<<<<< HEAD
-        public required ERegions Region { get; set; }
 
         public int CalculateDamage(ERegions enemyRegion)
         {
             switch (enemyRegion)
             {
                 case ERegions.VOID:
-                    if (Region == ERegions.DEMACIA)
-                        return Damage * 2;
-                    else if (Region == ERegions.SHADOWISLES)
-                        return Damage / 2;
-                    break;
+                    return (Region == ERegions.SHADOWISLES) ? Damage / 2 : (Region == ERegions.DEMACIA) ? Damage * 2 : Damage;
                 case ERegions.SHADOWISLES:
-                    if (Region == ERegions.VOID)
-                        return Damage * 2;
-                    else if (Region == ERegions.DEMACIA)
-                        return Damage / 2;
-                    break;
+                    return (Region == ERegions.DEMACIA) ? Damage / 2 : (Region == ERegions.VOID) ? Damage * 2 : Damage;
                 case ERegions.DEMACIA:
-                    if (Region == ERegions.SHADOWISLES)
-                        return Damage * 2;
-                    else if (Region == ERegions.VOID)
-                        return Damage / 2;
-                    break;
-            }
-
-            return Damage;
-=======
-        public required int ManaCosts { get; set; }
-        public required ERegions Regions { get; set; }
-
-        public int DamageCalculation(ERegions eRegions)
-        {
-            switch(eRegions)
-            {
-                case ERegions.VOID:
-                    return (Regions == ERegions.SHADOWISLES) ? Damage / 2 : (Regions == ERegions.DEMACIA) ? Damage * 2 : Damage;
-                case ERegions .SHADOWISLES:
-                    return (Regions == ERegions.DEMACIA) ? Damage / 2 : (Regions == ERegions.VOID) ? Damage * 2 : Damage;
-                case ERegions .DEMACIA:
-                    return (Regions == ERegions.VOID) ? Damage / 2 : (Regions == ERegions.SHADOWISLES) ? Damage * 2 : Damage;
+                    return (Region == ERegions.VOID) ? Damage / 2 : (Region == ERegions.SHADOWISLES) ? Damage * 2 : Damage;
             }
             return int.MaxValue;
->>>>>>> CardsImplementation
+
         }
     }
 }

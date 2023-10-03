@@ -12,3 +12,10 @@ D:\FH\3.-Semester\Software Engineering\MTCG\MTCG\obj\Debug\net7.0\refint\MTCG.dl
 D:\FH\3.-Semester\Software Engineering\MTCG\MTCG\obj\Debug\net7.0\MTCG.pdb
 D:\FH\3.-Semester\Software Engineering\MTCG\MTCG\obj\Debug\net7.0\MTCG.genruntimeconfig.cache
 D:\FH\3.-Semester\Software Engineering\MTCG\MTCG\obj\Debug\net7.0\ref\MTCG.dll
+D:\FH\GitRepo\Swen1-MTCG\MTCG\MTCG\obj\Debug\net7.0\MTCG.GeneratedMSBuildEditorConfig.editorconfig
+D:\FH\GitRepo\Swen1-MTCG\MTCG\MTCG\obj\Debug\net7.0\MTCG.AssemblyInfoInputs.cache
+D:\FH\GitRepo\Swen1-MTCG\MTCG\MTCG\obj\Debug\net7.0\MTCG.AssemblyInfo.cs
+D:\FH\GitRepo\Swen1-MTCG\MTCG\MTCG\obj\Debug\net7.0\MTCG.csproj.CoreCompileInputs.cache
+D:\FH\GitRepo\Swen1-MTCG\MTCG\MTCG\obj\Debug\net7.0\MTCG.dll
+D:\FH\GitRepo\Swen1-MTCG\MTCG\MTCG\obj\Debug\net7.0\refint\MTCG.dll
+D:\FH\GitRepo\Swen1-MTCG\MTCG\MTCG\obj\Debug\net7.0\MTCG.pdb

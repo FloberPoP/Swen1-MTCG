@@ -1,4 +1,6 @@
-﻿namespace MTCG
+﻿using MTCG.Database;
+
+namespace MTCG
 {
     internal class Program
     {

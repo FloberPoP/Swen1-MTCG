@@ -18,3 +18,6 @@ namespace MTCG.Database
         }
     }
 }
+
+//Eine klasse fürs parsing(Json, csv, ...)
+//

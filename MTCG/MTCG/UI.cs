@@ -12,18 +12,8 @@ namespace MTCG
 {
     internal static class UI
     {
-        public static void ShowMenu(User u)
-        {   
-            List<Option>  options = new List<Option>
-            {
-                new Option("Search for Battle", () => u.Battle()),
-                new Option("Manage Cards", () =>  u.ManageDeck()),
-                new Option("ShowStats", () =>  u.ShowStats()),
-                new Option("Shop", () =>  u.BuyCards()),
-                new Option("LogOut", () => u.Logout()),
-                new Option("Exit", () => Environment.Exit(0)),
-            };
-
+        public static void ShowMenu(User u, List<Option> options)
+        {     
             int index = 0;
             WriteMenu(options, options[index], u.Username);
 
@@ -111,43 +101,12 @@ namespace MTCG
         }
 
         #region Show Battle Field
-        public static void ShowBattlefield(User c1, User c2, int life1, int life2, int mana1, int mana2)
+        public static void ShowBattlefield(User c1, User c2)
         {
-            /*
-              
-			                      ---------------------------------------------
-			                      |   {nameA}   {nameA}   {nameA}   {nameA}   |
-			                      |				                              |
-			                      |   {nameB}   {nameB}   {nameB}   {nameB}   |
-            Live: {LiveValue}     ---------------------------------------------     Mana: {manaValue}
-										                                            Player {uname} Attacking
-            Live: {LiveValue}     ---------------------------------------------     Mana: {manaValue}
-			                      |   {nameC}   {nameC}   {nameC}   {nameC}   |
-			                      |				                              |
-			                      |   {nameD}   {nameD}   {nameD}   {nameD}   |
-			                      ---------------------------------------------
-              
-              
-            */
-            List<Card> A = new List<Card> {
-                new Champion("Fiora", 10, 10, ERegions.DEMACIA, 10, 10),
-                new Champion("Poppy", 10, 10, ERegions.DEMACIA, 10, 10),
-                new Spell("Flashe", 10, 10, ERegions.DEMACIA),
-                new Spell("Ghost", 10, 10, ERegions.DEMACIA)
-            };
-
-            List<Card> B = new List<Card> {
-                new Champion("Garen", 10, 10, ERegions.DEMACIA, 10, 10),
-                new Champion("Jarvan", 10, 10, ERegions.DEMACIA, 10, 10),
-                new Champion("Lux", 10, 10, ERegions.DEMACIA, 10, 10),
-                new Champion("Galio", 10, 10, ERegions.DEMACIA, 10, 10),
-            };
-
-            int lenght1 = CalculateSideLength(c1.Deck.Cards.Where(x => x is Champion).ToList());
-            int lenght2 = CalculateSideLength(c2.Deck.Cards.Where(x => x is Spell).ToList());
-            int lenght3 = CalculateSideLength(c1.Deck.Cards.Where(x => x is Champion).ToList());
-            int lenght4 = CalculateSideLength(c2.Deck.Cards.Where(x => x is Spell).ToList());
-            int sideLength = Math.Max(Math.Max(Math.Max(lenght1, lenght2), lenght3), lenght4);
+            int sideLength = Math.Max(Math.Max(Math.Max(CalculateSideLength(c1.Deck.Cards.Where(x => x is Champion).ToList()),
+                                                        CalculateSideLength(c2.Deck.Cards.Where(x => x is Spell).ToList())),
+                                                        CalculateSideLength(c1.Deck.Cards.Where(x => x is Champion).ToList())),
+                                                        CalculateSideLength(c2.Deck.Cards.Where(x => x is Spell).ToList()));
 
             Console.Write("             ");
             printCharxTimes("-", sideLength+1);
@@ -159,16 +118,16 @@ namespace MTCG
             Console.Write("|");
             Console.WriteLine();
             printChampioninField(sideLength, c2.Deck.Cards);
-            Console.Write($"Life: {life2.ToString("00")}     ");
+            Console.Write($"Life: {c2.Health.ToString("00")}     ");
             printCharxTimes("-", sideLength+1);
-            Console.Write($"     Mana: {mana2.ToString("00")}");
+            Console.Write($"     Mana: {c2.Mana.ToString("00")}");
             Console.WriteLine();
             printCharxTimes(" ", sideLength + 19);
             Console.Write($"Player {c1.Username} Attacking");
             Console.WriteLine();
-            Console.Write($"Life: {life1.ToString("00")}     ");
+            Console.Write($"Life: {c1.Health.ToString("00")}     ");
             printCharxTimes("-", sideLength + 1);
-            Console.Write($"     Mana: {mana1.ToString("00")}");
+            Console.Write($"     Mana: {c1.Mana.ToString("00")}");
             Console.WriteLine();
             printChampioninField(sideLength, c1.Deck.Cards);
             Console.Write("             |");

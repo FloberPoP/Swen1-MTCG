@@ -47,7 +47,10 @@ namespace MTCG.Users
 
         public void Battle()
         {
-
+            //get Other User from DB
+            User user = null;
+            Battle b = new Battle(this, user);
+            b.BattleStart();
         }
 
         public void Login()

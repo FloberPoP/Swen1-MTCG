@@ -11,7 +11,17 @@ namespace MTCG
     {
         public void StartGame(User u)
         {
-            UI.ShowMenu(u);
+            List<Option> options = new List<Option>
+            {
+                new Option("Search for Battle", () => u.Battle()),
+                new Option("Manage Cards", () =>  u.ManageDeck()),
+                new Option("ShowStats", () =>  u.ShowStats()),
+                new Option("Shop", () =>  u.BuyCards()),
+                new Option("LogOut", () => u.Logout()),
+                new Option("Exit", () => Environment.Exit(0)),
+            };
+
+            UI.ShowMenu(u, options);
         }
     }
 }

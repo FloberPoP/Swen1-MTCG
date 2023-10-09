@@ -16,19 +16,17 @@ namespace MTCG.Cards
         {
             MaxHealth = maxHealth;
             CurrentHealth = currentHealth;
-            IsDead = false;
+           
         }
 
         public int MaxHealth { get; set; }
         public int CurrentHealth { get; set; }
-        public bool IsDead { get; private set; }
 
         public bool Stuned { get; set; }
         public void UpdateHealth(int enemyDamage)
         {
             CurrentHealth += enemyDamage;
-            if (CurrentHealth <= 0)
-                IsDead = true;
+            if (CurrentHealth <= 0) { }
         }
     }
 }

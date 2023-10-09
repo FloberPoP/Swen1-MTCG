@@ -26,6 +26,10 @@ namespace MTCG.Users
         public string Username { get; set; }
         public string Password { get; set; }
 
+        public int Mana { get; set; } = 0;
+        public int Health { get; set; } = 10;
+        public Deck DeadDeck { get; set; }
+
         public void ManageDeck()
         {
             if(Deck != null && Deck.Cards != null) {

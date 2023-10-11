@@ -50,11 +50,23 @@ namespace MTCG
 
         private void PlayRound(User playerOne,User playerTwo)
         {
+            Card attackingCard = SelectRandomCard(playerOne.Deck, 'c');
             ShowBattlefield();
-            switch(CheckCard(SelectRandomCard(playerOne.Deck, 'c'), playerTwo.Deck))
+            switch(CheckCard(attackingCard, playerTwo.Deck, playerOne))
             {
                 case 0:
-                    //Damage passiert
+                    Champion a = (Champion)SelectRandomCard(playerTwo.Deck, 'c');
+                    a.UpdateHealth(attackingCard.CalculateDamage(a.Region));
+                    BattleLog.Append($"{a.Name} got attecked by {attackingCard.Name} for {attackingCard.CalculateDamage(a.Region)}");
+                    if (a.IsDead)
+                    {
+                        BattleLog.Append($"{a.Name} Died");
+                        playerTwo.Deck.RemoveCards(a);
+                        playerTwo.DeadDeck.AddCards(a);
+                    }
+
+                    playerOne.Mana -= attackingCard.ManaCost;
+                        
                     break;
 
                 case -1:
@@ -62,36 +74,11 @@ namespace MTCG
                     break;
 
                 case -2:
-                    //ausgabe keine Monster zum angreifen Player Wird sebst angegriffen
+                    BattleLog.Append($"{PlayerTwo.Username} has no more champions left");
+                    BattleLog.Append($"{PlayerTwo.Username} got attacked by {attackingCard.Name} for {attackingCard.Damage}");
                     break;
-
-                //ein random champion mit er Methode SelectRandomCard(d2, 'c') die eine Card zurückgibt 
-                //Champion ausgewählht => greift random Champion von Player 2 an
-                //wenn nur mehr spells Übrig ausgabe keine Monster zum angreifen Player Wird sebst angegriffen
-                //Sonst damage an Monster->Monster veriert Leben -> Monster Tot -> Dead Deck hinzufügen vom Main Deck entfernen
-                //Spell ausgewählt => greift random Champion an
-                //Pro Runde Mehr Mana wenn zu wenig Mana nächster player ist drann
             }
-
-            //Wie Runeterra alle karten gleichzeitig Booster wenn alle karten vom gleichen region sind
-            //Void -> Spells deal 20% more damage
-            //Shadow-> 10% vom Damage gehealt
-            //Demacia -> Strongest 30% mor Damage
-
-
-            // Hier sollten Sie die Logik für den Kampf zwischen den Champions implementieren
-            // Zum Beispiel: championOne.Attack(championTwo);
-
-            // Update der Spielerleben und Manawerte
-            // HealthPlayerOne -= damageOne;
-            // HealthPlayerTwo -= damageTwo;
-            // ManaPlayerOne += 2;
-            // ManaPlayerTwo += 2;
-
-            // Hier können Sie weitere Aktionen für den Zug implementieren
         }
-
-
 
         private void RoundOver(int count)
         {
@@ -100,30 +87,18 @@ namespace MTCG
             PlayerTwo.Mana += count * 2;
         }
 
-
-        private int CheckCard(Card c, Deck d)
+        private int CheckCard(Card c, Deck d, User player)
         {
-            /*if (PlayerOnRound)
+            if (c.ManaCost > player.Mana)  
             {
-                if (c.ManaCost > ManaPlayerOne)
-                {
-                    return -1; // Spieler 1 hat nicht genug Mana
-                }
-            }
-            else
-            {
-                if (c.ManaCost > ManaPlayerTwo)  
-                {
-                    return -1; // Spieler 2 hat nicht genug Mana
-                }
+                return -1;
             }
 
             if (!d.Cards.Any(card => card is Champion))
             {
-                return -2; // Im Deck ist kein Champion vorhanden
+                return -2;
             }
 
-            // Alles ist in Ordnung, die Karte kann gespielt werden*/
             return 0;
 
         }
@@ -188,7 +163,28 @@ namespace MTCG
 
         private void ResetBattle()
         {
-            //Dead Deck wird zu Player Deck wieder hinzugefügt (Leben von den Champions wieder herrstellens
+            foreach(Card c in PlayerOne.DeadDeck.Cards)
+            {
+                if(c is Champion)
+                {
+                    c.IsDead = false;
+                    //c.CurrentHealth = c.MaxHealth;
+                }
+            }
+
+            foreach (Card c in PlayerTwo.DeadDeck.Cards)
+            {
+                if (c is Champion)
+                {
+                    c.IsDead = false;
+                    //c.CurrentHealth = c.MaxHealth;
+                }
+            }
+
+            PlayerOne.Deck = PlayerOne.DeadDeck;
+            PlayerTwo.Deck = PlayerTwo.DeadDeck;
+            PlayerOne.DeadDeck.Cards.Clear();
+            PlayerTwo.DeadDeck.Cards.Clear();
         }
     }
 }

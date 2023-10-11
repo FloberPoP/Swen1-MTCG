@@ -18,7 +18,7 @@ namespace MTCG.Cards
         public int Damage { get; set; }
         public int ManaCost { get; set; }
         public ERegions Region { get; set; }
-        public bool IsDead { get; private set; }
+        public bool IsDead { get; set; }
 
         public Card(string name, int damage, int manaCosts, ERegions regions)
         {

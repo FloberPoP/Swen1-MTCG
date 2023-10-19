@@ -11,11 +11,11 @@ namespace MTCG.Cards
 {
     internal class Champion : Card, IHealth
     {
-        public Champion(string name, int damage, int manaCost, ERegions region, int maxHealth, int currentHealth)
+        public Champion(string name, int damage, int manaCost, ERegions region, int maxHealth)
         : base(name, damage, manaCost, region)
         {
             MaxHealth = maxHealth;
-            CurrentHealth = currentHealth;
+            CurrentHealth = maxHealth;
            
         }
 

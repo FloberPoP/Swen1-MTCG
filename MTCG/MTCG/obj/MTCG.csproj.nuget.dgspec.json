@@ -10,11 +10,11 @@
         "projectUniqueName": "D:\\FH\\GitRepo\\Swen1-MTCG\\MTCG\\MTCG\\MTCG.csproj",
         "projectName": "MTCG",
         "projectPath": "D:\\FH\\GitRepo\\Swen1-MTCG\\MTCG\\MTCG\\MTCG.csproj",
-        "packagesPath": "C:\\Users\\flori\\.nuget\\packages\\",
+        "packagesPath": "C:\\Users\\Poppinger\\.nuget\\packages\\",
         "outputPath": "D:\\FH\\GitRepo\\Swen1-MTCG\\MTCG\\MTCG\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\flori\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Poppinger\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -39,6 +39,12 @@
       "frameworks": {
         "net7.0": {
           "targetAlias": "net7.0",
+          "dependencies": {
+            "Npgsql": {
+              "target": "Package",
+              "version": "[7.0.6, )"
+            }
+          },
           "imports": [
             "net461",
             "net462",

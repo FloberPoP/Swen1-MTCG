@@ -26,3 +26,7 @@ D:\FH\GitRepo\Swen1-MTCG\MTCG\MTCG\bin\Debug\net7.0\MTCG.dll
 D:\FH\GitRepo\Swen1-MTCG\MTCG\MTCG\bin\Debug\net7.0\MTCG.pdb
 D:\FH\GitRepo\Swen1-MTCG\MTCG\MTCG\obj\Debug\net7.0\MTCG.genruntimeconfig.cache
 D:\FH\GitRepo\Swen1-MTCG\MTCG\MTCG\obj\Debug\net7.0\ref\MTCG.dll
+D:\FH\GitRepo\Swen1-MTCG\MTCG\MTCG\bin\Debug\net7.0\Microsoft.Extensions.Logging.Abstractions.dll
+D:\FH\GitRepo\Swen1-MTCG\MTCG\MTCG\bin\Debug\net7.0\Npgsql.dll
+D:\FH\GitRepo\Swen1-MTCG\MTCG\MTCG\obj\Debug\net7.0\MTCG.csproj.AssemblyReference.cache
+D:\FH\GitRepo\Swen1-MTCG\MTCG\MTCG\obj\Debug\net7.0\MTCG.csproj.CopyComplete

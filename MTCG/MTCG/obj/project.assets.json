@@ -121,7 +121,7 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\Poppinger\\.nuget\\packages\\": {}
+    "C:\\Users\\flori\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
@@ -129,11 +129,11 @@
       "projectUniqueName": "D:\\FH\\GitRepo\\Swen1-MTCG\\MTCG\\MTCG\\MTCG.csproj",
       "projectName": "MTCG",
       "projectPath": "D:\\FH\\GitRepo\\Swen1-MTCG\\MTCG\\MTCG\\MTCG.csproj",
-      "packagesPath": "C:\\Users\\Poppinger\\.nuget\\packages\\",
+      "packagesPath": "C:\\Users\\flori\\.nuget\\packages\\",
       "outputPath": "D:\\FH\\GitRepo\\Swen1-MTCG\\MTCG\\MTCG\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\Poppinger\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\flori\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [

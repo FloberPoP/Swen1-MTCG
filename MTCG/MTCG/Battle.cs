@@ -28,6 +28,7 @@ namespace MTCG
             while (CheckPlayers())
             {
                 Console.WriteLine($"Round {roundNumber}");
+                BattleLog.Append($"Round {roundNumber}");
                 if (roundNumber % 2 != 0)
                     PlayRound(PlayerOne, PlayerTwo);
                 else
@@ -46,6 +47,8 @@ namespace MTCG
                 BattleLog.Append($"{PlayerTwo.Username} Lost.");
                 BattleLog.Append($"{PlayerOne.Username} Won.");
             }
+
+            ResetBattle();
         }
 
         private void PlayRound(User playerOne,User playerTwo)

@@ -9,23 +9,15 @@ namespace MTCG
        
         static void Main(string[] args)
         {
-            var dbHandler = new DataHandler("localhost", 5432, "mtcgdb", "if22b009", "debian123");
+            var dbHandler = new DataHandler("172.17.0.2", "5432", "mtcgdb", "postgres", "");
 
-            // Example: Execute a SQL statement (e.g., INSERT, UPDATE, DELETE)
-            //string insertSql = "INSERT INTO your_table (column1, column2) VALUES ('value1', 'value2');";
-            //dbHandler.ExecuteNonQuery(insertSql);
+            string region = "SHADOWISLES";
+            List<string> shadowIslesCardNames = dbHandler.GetCardNamesByRegion(region);
 
-            // Example: Execute a SELECT statement and read the results
-            string selectSql = "SELECT * FROM Cards;";
-            NpgsqlDataReader reader = dbHandler.ExecuteQuery(selectSql);
-
-            while (reader.Read())
+            foreach (var cardName in shadowIslesCardNames)
             {
-                Console.WriteLine($"Column1: {reader["column1"]}, Column2: {reader["column2"]}");
+                Console.WriteLine($"Card Name: {cardName}");
             }
-
-            // Close the reader and release resources
-            dbHandler.CloseConnection(reader);
 
             //GameController controller = new GameController();
             //controller.StartGame(DataHandler.UserLogin(UI.GetUsername(), UI.GetPassword()));

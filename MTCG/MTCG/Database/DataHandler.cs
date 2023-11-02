@@ -5,59 +5,95 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Npgsql;
+using MTCG.Cards;
 
 namespace MTCG.Database
 {
     internal class DataHandler
     {
-        private string ConnectionString { get; set; }
+        private string connectionString;
+        private NpgsqlConnection connection;
 
-        public DataHandler(string host, int port, string database, string username, string password)
+        public DataHandler(string host, string port, string database, string username, string password)
         {
-            // Construct the connection string
-            //ConnectionString = $"Host={host};Port={port};Database=mtcgdb;Username=if22b009;Password=debian123";
-            ConnectionString = $"Host={host};Port={port};Database={database};Username={username};Password={password}";
+            connectionString = $"Host={host};Port={port};Database={database};Username={username};Password={password}";
+            connection = new NpgsqlConnection(connectionString);
         }
 
-        public void ExecuteNonQuery(string sql)
+        public void OpenConnection()
         {
-            using (var connection = new NpgsqlConnection(ConnectionString))
+            if (connection.State != System.Data.ConnectionState.Open)
             {
                 connection.Open();
-                using (var cmd = new NpgsqlCommand(sql, connection))
-                {
-                    cmd.ExecuteNonQuery();
-                }
             }
         }
 
-        public NpgsqlDataReader ExecuteQuery(string sql)
+        public void CloseConnection()
         {
-            NpgsqlDataReader reader = null;
-            using (var connection = new NpgsqlConnection(ConnectionString))
+            if (connection.State != System.Data.ConnectionState.Closed)
             {
-                connection.Open();
-                using (var cmd = new NpgsqlCommand(sql, connection))
-                {
-                    reader = cmd.ExecuteReader();
-                }
+                connection.Close();
             }
-            return reader;
         }
 
-        public void CloseConnection(NpgsqlDataReader reader)
+        public NpgsqlDataReader ExecuteQuery(string query)
         {
-            if (reader != null && !reader.IsClosed)
+            try
             {
-                reader.Close();
+                OpenConnection();
+                using (var cmd = new NpgsqlCommand(query, connection))
+                {
+                    return cmd.ExecuteReader();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error: " + ex.Message);
+                return null;
             }
         }
+
         public static User UserLogin(string uname, string pwd)
         {
             Stack stack = new Stack();
             Deck deck = new Deck();
             User u = new(stack, deck, 20, 100, uname, pwd);
             return u;
+        }
+
+        public List<string> GetCardNamesByRegion(string region)
+        {
+            List<string> cardNames = new List<string>();
+
+            try
+            {
+                OpenConnection();
+
+                string query = "SELECT Name FROM Cards WHERE Region = @Region";
+                using (var cmd = new NpgsqlCommand(query, connection))
+                {
+                    cmd.Parameters.AddWithValue("Region", region);
+
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            string cardName = reader.GetString(reader.GetOrdinal("Name"));
+                            cardNames.Add(cardName);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error: " + ex.Message);
+            }
+            finally
+            {
+                CloseConnection();
+            }
+
+            return cardNames;
         }
     }
 }

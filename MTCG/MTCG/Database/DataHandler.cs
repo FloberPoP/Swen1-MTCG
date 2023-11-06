@@ -12,27 +12,27 @@ namespace MTCG.Database
     internal class DataHandler
     {
         private string connectionString;
-        private NpgsqlConnection connection;
+        public NpgsqlConnection Connection { get; }   
 
         public DataHandler(string host, string port, string database, string username, string password)
         {
             connectionString = $"Host={host};Port={port};Database={database};Username={username};Password={password}";
-            connection = new NpgsqlConnection(connectionString);
+            Connection = new NpgsqlConnection(connectionString);
         }
 
         public void OpenConnection()
         {
-            if (connection.State != System.Data.ConnectionState.Open)
+            if (Connection.State != System.Data.ConnectionState.Open)
             {
-                connection.Open();
+                Connection.Open();
             }
         }
 
         public void CloseConnection()
         {
-            if (connection.State != System.Data.ConnectionState.Closed)
+            if (Connection.State != System.Data.ConnectionState.Closed)
             {
-                connection.Close();
+                Connection.Close();
             }
         }
 
@@ -41,7 +41,7 @@ namespace MTCG.Database
             try
             {
                 OpenConnection();
-                using (var cmd = new NpgsqlCommand(query, connection))
+                using (var cmd = new NpgsqlCommand(query, Connection))
                 {
                     return cmd.ExecuteReader();
                 }
@@ -52,51 +52,5 @@ namespace MTCG.Database
                 return null;
             }
         }
-
-        public static User UserLogin(string uname, string pwd)
-        {
-            Stack stack = new Stack();
-            Deck deck = new Deck();
-            User u = new(stack, deck, 20, 100, uname, pwd);
-            return u;
-        }
-
-        public List<string> GetCardNamesByRegion(string region)
-        {
-            List<string> cardNames = new List<string>();
-
-            try
-            {
-                OpenConnection();
-
-                string query = "SELECT Name FROM Cards WHERE Region = @Region";
-                using (var cmd = new NpgsqlCommand(query, connection))
-                {
-                    cmd.Parameters.AddWithValue("Region", region);
-
-                    using (var reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            string cardName = reader.GetString(reader.GetOrdinal("Name"));
-                            cardNames.Add(cardName);
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Error: " + ex.Message);
-            }
-            finally
-            {
-                CloseConnection();
-            }
-
-            return cardNames;
-        }
     }
 }
-
-//Eine klasse fürs parsing(Json, csv, ...)
-//

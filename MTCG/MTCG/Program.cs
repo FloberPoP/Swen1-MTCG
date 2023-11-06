@@ -9,15 +9,18 @@ namespace MTCG
        
         static void Main(string[] args)
         {
-            var dbHandler = new DataHandler("172.17.0.2", "5432", "mtcgdb", "postgres", "");
+            DataHandler dataHandler = new DataHandler("localhost", "5432", "mtcgdb", "postgres", "debian123");
+            Seed seed = new Seed(dataHandler);
 
-            string region = "SHADOWISLES";
-            List<string> shadowIslesCardNames = dbHandler.GetCardNamesByRegion(region);
+            // Erstelle die Cards-Tabelle
+            seed.CreateCardsTable();
 
-            foreach (var cardName in shadowIslesCardNames)
-            {
-                Console.WriteLine($"Card Name: {cardName}");
-            }
+            // Füge Daten in die Tabelle ein
+            seed.InsertCardData();
+
+            // Lösche alle Tabellen und Daten in der Datenbank
+            seed.ClearDatabase();
+
 
             //GameController controller = new GameController();
             //controller.StartGame(DataHandler.UserLogin(UI.GetUsername(), UI.GetPassword()));

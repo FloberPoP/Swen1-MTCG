@@ -1,11 +1,11 @@
 {
   "version": 2,
-  "dgSpecHash": "mLRl4EZIs1nsgFAza1WkGi+efBSrVy+liwLt4hSvO/1rdC/FOcIulXSPH4xarE0bkff0FMWq8dWrfuuWeE6HEA==",
+  "dgSpecHash": "0qskmkMgrbYd2Nc82hv1hbvpeZw9MYJ3tMs5XiypaCdh8s7RaKpP2Su2SteZmw/N+DgPkrNp++k0qJ0apygD6Q==",
   "success": true,
   "projectFilePath": "D:\\FH\\GitRepo\\Swen1-MTCG\\MTCG\\MTCG\\MTCG.csproj",
   "expectedPackageFiles": [
-    "C:\\Users\\flori\\.nuget\\packages\\microsoft.extensions.logging.abstractions\\6.0.0\\microsoft.extensions.logging.abstractions.6.0.0.nupkg.sha512",
-    "C:\\Users\\flori\\.nuget\\packages\\npgsql\\7.0.6\\npgsql.7.0.6.nupkg.sha512"
+    "C:\\Users\\Poppinger\\.nuget\\packages\\microsoft.extensions.logging.abstractions\\6.0.0\\microsoft.extensions.logging.abstractions.6.0.0.nupkg.sha512",
+    "C:\\Users\\Poppinger\\.nuget\\packages\\npgsql\\7.0.6\\npgsql.7.0.6.nupkg.sha512"
   ],
   "logs": []
 }

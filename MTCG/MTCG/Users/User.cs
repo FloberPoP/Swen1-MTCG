@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using MTCG.Battling;
 
 namespace MTCG.Users
 {
@@ -25,11 +26,8 @@ namespace MTCG.Users
         public int? Elo {  get; set; }
         public string Username { get; set; }
         public string Password { get; set; }
-
-        public int Mana { get; set; } = 0;
-        public int Health { get; set; } = 10;
-        public Deck DeadDeck { get; set; }
-
+        public int Health { get; set; }
+        public int Mana {  get; set; }
         public void ManageDeck()
         {
             if(Deck != null && Deck.Cards != null) {

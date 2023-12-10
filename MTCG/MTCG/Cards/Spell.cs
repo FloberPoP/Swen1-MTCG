@@ -17,12 +17,12 @@ namespace MTCG.Cards
 
         public ESpellType SpellType {  get; set; }
 
-        public int CastAbility()
+        public int CastAbility(ERegions enemyRegion)
         {
             switch(SpellType)
             {
                 case ESpellType.DAMAGE:
-                    return Damage;
+                    return CalculateDamage(enemyRegion);
                 case ESpellType.HEAL:
                     return Damage * -1;
                 case ESpellType.STUN:

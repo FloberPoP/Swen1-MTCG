@@ -30,3 +30,4 @@ D:\FH\GitRepo\Swen1-MTCG\MTCG\MTCG\bin\Debug\net7.0\Microsoft.Extensions.Logging
 D:\FH\GitRepo\Swen1-MTCG\MTCG\MTCG\bin\Debug\net7.0\Npgsql.dll
 D:\FH\GitRepo\Swen1-MTCG\MTCG\MTCG\obj\Debug\net7.0\MTCG.csproj.AssemblyReference.cache
 D:\FH\GitRepo\Swen1-MTCG\MTCG\MTCG\obj\Debug\net7.0\MTCG.csproj.CopyComplete
+D:\FH\GitRepo\Swen1-MTCG\MTCG\MTCG\obj\Debug\net7.0\MTCG.sourcelink.json

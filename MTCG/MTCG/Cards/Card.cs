@@ -12,13 +12,13 @@ namespace MTCG.Cards
     //Demacia --> Void
     public enum ERegions { VOID, SHADOWISLES, DEMACIA };
 
-    internal abstract class Card
+    internal class Card
     {
+        public int CardID { get; set; }
         public string Name { get; set; }
         public int Damage { get; set; }
         public int ManaCost { get; set; }
         public ERegions Region { get; set; }
-        public bool IsDead { get; set; }
 
         public Card(string name, int damage, int manaCosts, ERegions regions)
         {
@@ -26,7 +26,6 @@ namespace MTCG.Cards
             Damage = damage;
             ManaCost = manaCosts;
             Region = regions;
-            IsDead = false;
         }
 
         public int CalculateDamage(ERegions enemyRegion)

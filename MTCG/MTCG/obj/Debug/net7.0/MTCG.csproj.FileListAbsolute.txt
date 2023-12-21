@@ -60,3 +60,8 @@ D:\FH\GitRepo\Swen1-MTCG\MTCG\MTCG\bin\Debug\net7.0\Microsoft.Extensions.Options
 D:\FH\GitRepo\Swen1-MTCG\MTCG\MTCG\bin\Debug\net7.0\Microsoft.Extensions.Primitives.dll
 D:\FH\GitRepo\Swen1-MTCG\MTCG\MTCG\bin\Debug\net7.0\Microsoft.Net.Http.Headers.dll
 D:\FH\GitRepo\Swen1-MTCG\MTCG\MTCG\bin\Debug\net7.0\Newtonsoft.Json.dll
+D:\FH\GitRepo\Swen1-MTCG\MTCG\MTCG\bin\Debug\net7.0\Microsoft.IdentityModel.Abstractions.dll
+D:\FH\GitRepo\Swen1-MTCG\MTCG\MTCG\bin\Debug\net7.0\Microsoft.IdentityModel.JsonWebTokens.dll
+D:\FH\GitRepo\Swen1-MTCG\MTCG\MTCG\bin\Debug\net7.0\Microsoft.IdentityModel.Logging.dll
+D:\FH\GitRepo\Swen1-MTCG\MTCG\MTCG\bin\Debug\net7.0\Microsoft.IdentityModel.Tokens.dll
+D:\FH\GitRepo\Swen1-MTCG\MTCG\MTCG\bin\Debug\net7.0\System.IdentityModel.Tokens.Jwt.dll

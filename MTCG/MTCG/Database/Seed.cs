@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using Npgsql;
+﻿using Npgsql;
 
 namespace MTCG.Database
 {
@@ -16,13 +10,15 @@ namespace MTCG.Database
         {
             //ClearDatabase();
             //CreateTables();
-            //InsertCardData();
+            //InsertCardData();         
         }
         public static void CreateTables()
         {
             string createCards = "CREATE TABLE IF NOT EXISTS Cards " +
                 "(CardsID serial PRIMARY KEY, Name text, Damage int, Region text, Type text)";
             ExecuteNonQuery(createCards);
+
+
 
             string createUsers = "CREATE TABLE IF NOT EXISTS Users " +
                 "(UsersID serial PRIMARY KEY, " +
@@ -37,7 +33,7 @@ namespace MTCG.Database
 
 
             string createStacks = "CREATE TABLE IF NOT EXISTS Stacks " +
-                "(StacksID serial PRIMARY KEY, UserID int REFERENCES Users(UsersID), CardID int REFERENCES Cards(CardsID))";
+                "(StacksID serial PRIMARY KEY, UserID int REFERENCES Users(UsersID), CardID int REFERENCES Cards(CardsID), Trading bool)";
             ExecuteNonQuery(createStacks);
 
             string createDecks = "CREATE TABLE IF NOT EXISTS Decks " +
@@ -55,6 +51,10 @@ namespace MTCG.Database
                 "Looser text, " +
                 "Winner text)";
             ExecuteNonQuery(createBattleLogs);
+
+            string createPackages = "CREATE TABLE IF NOT EXISTS Packages " +
+                 "(PackagesID serial PRIMARY KEY, PackagesKey int, CardsID int REFERENCES Cards(CardsID), Price int)";
+            ExecuteNonQuery(createPackages);
         }
 
         public static void InsertCardData()
@@ -87,9 +87,12 @@ namespace MTCG.Database
 
         public static void ClearDatabase()
         {
-            string clearDatabaseQuery = "DROP TABLE IF EXISTS Stacks, Decks, Cards, Users";
+            // Drop all tables with CASCADE option
+            string clearDatabaseQuery = "DROP TABLE IF EXISTS Stacks, Decks, Cards, Users, Packages CASCADE";
             ExecuteNonQuery(clearDatabaseQuery);
         }
+
+
 
         private static void ExecuteNonQuery(string query)
         {
@@ -134,6 +137,10 @@ namespace MTCG.Database
             // Print BattleLogs table
             string selectBattleLogs = "SELECT * FROM BattleLogs";
             PrintTable("BattleLogs", selectBattleLogs);
+
+            // Print BattleLogs table
+            string selectPackages = "SELECT * FROM Packages";
+            PrintTable("Packages", selectPackages);
         }
 
         private static void PrintTable(string tableName, string selectQuery)
@@ -153,7 +160,7 @@ namespace MTCG.Database
                         Console.Write(reader.GetName(i) + "\t");
                     }
 
-                    Console.WriteLine(); // New line after column names
+                    Console.WriteLine();
 
                     while (reader.Read())
                     {
@@ -161,7 +168,7 @@ namespace MTCG.Database
                         {
                             Console.Write(reader[i] + "\t");
                         }
-                        Console.WriteLine(); // New line after each row
+                        Console.WriteLine();
                     }
 
                     Console.WriteLine("--------------------------------------------------\n\n\n");
@@ -176,8 +183,6 @@ namespace MTCG.Database
                 dataHandler.CloseConnection();
             }
         }
-
-
         #endregion
     }
 }

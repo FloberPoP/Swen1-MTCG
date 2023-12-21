@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
-using MTCG.Cards;
+﻿using MTCG.Cards;
 using MTCG.Database;
+using MTCG.Trading;
 using Newtonsoft.Json;
 using Npgsql;
 using NpgsqlTypes;
@@ -75,15 +75,44 @@ namespace MTCG.Users
             return null; // User not found
         }
 
-
-        public static bool ValidateUserCredentials(string username, string password)
+        public static void CreatePackages(Package p)
         {
-            User user = GetUserByUsername(username);    
-            if (user.Username == username && password == user.Password)
+            string query = "INSERT INTO Packages (PackagesKey, CardsID, Price) " +
+                           "VALUES (@packageskey, @cardsid, @price)";
+
+            List<Card> cards = p.Cards;
+
+            foreach (Card card in cards)
             {
-                return true;
+                CreateCard(card);
+                var parameters = new NpgsqlParameter[]
+                {
+                    new NpgsqlParameter("@packageskey", p.PackageKey),
+                    new NpgsqlParameter("@cardsid", card.CardsID),
+                    new NpgsqlParameter("@price", p.Price)
+                };
+
+                dataHandler.ExecuteNonQuery(query, parameters);
             }
-            return false;
+            
+        }
+
+        public static void CreateCard(Card c)
+        {
+
+            string query = "INSERT INTO Cards (CardsID, Name, Damage, Region, Type)" +
+                           "VALUES (@cardsid, @name, @damage, @region, @type)";
+
+            var parameters = new NpgsqlParameter[]
+            {
+                new NpgsqlParameter("@cardsid", c.CardsID),
+                new NpgsqlParameter("@name", c.Name),
+                new NpgsqlParameter("@damage", c.Damage),
+                new NpgsqlParameter("@region", c.Region.ToString()),
+                new NpgsqlParameter("@type", c.Type.ToString())
+            };
+
+            dataHandler.ExecuteNonQuery(query, parameters);
         }
     }
 }

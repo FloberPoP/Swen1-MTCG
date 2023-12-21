@@ -1,4 +1,5 @@
 ﻿using MTCG.Cards;
+using MTCG.UI.UI;
 using MTCG.Users;
 using System;
 using System.Collections.Generic;
@@ -8,12 +9,12 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MTCG
+namespace MTCG.UI_Client
 {
     internal static class UI
     {
         public static void ShowMenu(User u, List<Option> options)
-        {     
+        {
             int index = 0;
             WriteMenu(options, options[index], u.Username);
 
@@ -68,16 +69,18 @@ namespace MTCG
         public static string GetStringInput()
         {
             string input;
-            do {
+            do
+            {
                 input = Console.ReadLine();
             } while (!string.IsNullOrEmpty(input) && !string.IsNullOrWhiteSpace(input));
             return input;
         }
-         
+
         public static int GerIntInput(int max, int min)
         {
             int input;
-            do {
+            do
+            {
                 input = (int)Convert.ToInt64(Console.ReadLine());
             } while (input < max && input > min);
             return input;
@@ -95,9 +98,9 @@ namespace MTCG
             return Console.ReadLine();
         }
 
-        public static void ShowDeck() 
+        public static void ShowDeck()
         {
-           
+
         }
 
         #region Show Battle Field

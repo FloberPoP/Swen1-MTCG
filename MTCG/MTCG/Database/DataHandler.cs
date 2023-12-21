@@ -1,10 +1,4 @@
-﻿using MTCG.Users;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Npgsql;
+﻿using Npgsql;
 using MTCG.Cards;
 
 namespace MTCG.Database
@@ -85,7 +79,7 @@ namespace MTCG.Database
             }
         }
 
-        public EType ETypeConverter(string type)
+        public static EType ETypeConverter(string type)
         {
             if (Enum.TryParse<EType>(type, out var result))
             {
@@ -97,7 +91,7 @@ namespace MTCG.Database
             }
         }
 
-        public ERegions ERegionsConverter(string region)
+        public static ERegions ERegionsConverter(string region)
         {
             if (Enum.TryParse<ERegions>(region, out var result))
             {
@@ -108,11 +102,5 @@ namespace MTCG.Database
                 throw new ArgumentException($"Invalid region: {region}");
             }
         }
-
-        // Example usage for SELECT:
-        // var reader = dataHandler.ExecuteSelectQuery("SELECT * FROM TableName WHERE ColumnName = @param1", new NpgsqlParameter[] { new NpgsqlParameter("@param1", "someValue") });
-
-        // Example usage for INSERT/UPDATE:
-        // var affectedRows = dataHandler.ExecuteNonQuery("INSERT INTO TableName (ColumnName) VALUES (@param1)", new NpgsqlParameter[] { new NpgsqlParameter("@param1", "someValue") });
     }
 }

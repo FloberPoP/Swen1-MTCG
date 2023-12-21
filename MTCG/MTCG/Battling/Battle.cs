@@ -72,7 +72,7 @@ namespace MTCG.Battling
             
             // Update player stats (BattleCount and ELO calculation) => in DB over username
 
-            return new BattleLog(rounds, looser, winner);
+            return new BattleLog(rounds, looser.Username, winner.Username);
         }
 
         private Card DrawCard(List<Card> cards) 

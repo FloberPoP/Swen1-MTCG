@@ -12,10 +12,10 @@ namespace MTCG.Battling
         public int BattleID { get; set; }
 
         public StringBuilder Rounds { get; set; }
-        public User Looser { get; set; }
-        public User Winner { get; set; }
+        public string Looser { get; set; }
+        public string Winner { get; set; }
 
-        public BattleLog(StringBuilder rounds, User looser, User winner)
+        public BattleLog(StringBuilder rounds, string looser, string winner)
         {
             Rounds = rounds;
             Looser = looser;
@@ -28,8 +28,8 @@ namespace MTCG.Battling
             
             Console.WriteLine("Rounds:");
             Console.WriteLine(Rounds.ToString());
-            Console.WriteLine($"\n\nWinner: {Winner.Username}");
-            Console.WriteLine($"Looser: {Looser.Username}");
+            Console.WriteLine($"\n\nWinner: {Winner}");
+            Console.WriteLine($"Looser: {Looser}");
         }
     }
 }

@@ -8,23 +8,56 @@ using Npgsql;
 
 namespace MTCG.Database
 {
-    internal class Seed
+    internal static class Seed
     {
-        private readonly DataHandler dataHandler;
+        private static readonly DataHandler dataHandler = new("localhost", "5432", "mtcgdb", "postgres", "debian123");
 
-        public Seed(DataHandler dataHandler)
+        public static void Seeding()
         {
-            this.dataHandler = dataHandler;
+            //ClearDatabase();
+            //CreateTables();
+            //InsertCardData();
         }
-
-        public void CreateCardsTable()
+        public static void CreateTables()
         {
-            string createTableQuery = "CREATE TABLE IF NOT EXISTS Cards " +
+            string createCards = "CREATE TABLE IF NOT EXISTS Cards " +
                 "(CardsID serial PRIMARY KEY, Name text, Damage int, Region text, Type text)";
-            ExecuteNonQuery(createTableQuery);
+            ExecuteNonQuery(createCards);
+
+            string createUsers = "CREATE TABLE IF NOT EXISTS Users " +
+                "(UsersID serial PRIMARY KEY, " +
+                "Username text, " +
+                "Password text, " +
+                "StackID int, " +
+                "DeckID int, " +
+                "Coins int, " +
+                "Elo int, " +
+                "BattleCount int)";
+            ExecuteNonQuery(createUsers);
+
+
+            string createStacks = "CREATE TABLE IF NOT EXISTS Stacks " +
+                "(StacksID serial PRIMARY KEY, UserID int REFERENCES Users(UsersID), CardID int REFERENCES Cards(CardsID))";
+            ExecuteNonQuery(createStacks);
+
+            string createDecks = "CREATE TABLE IF NOT EXISTS Decks " +
+                "(DecksID serial PRIMARY KEY, UserID int REFERENCES Users(UsersID), CardID int REFERENCES Cards(CardsID))";
+            ExecuteNonQuery(createDecks);
+
+            string alterUsers = "ALTER TABLE Users " +
+                "ADD CONSTRAINT FK_Users_Stacks FOREIGN KEY (StackID) REFERENCES Stacks(StacksID) ON DELETE SET NULL, " +
+                "ADD CONSTRAINT FK_Users_Decks FOREIGN KEY (DeckID) REFERENCES Decks(DecksID) ON DELETE SET NULL";
+            ExecuteNonQuery(alterUsers);
+
+            string createBattleLogs = "CREATE TABLE IF NOT EXISTS BattleLogs " +
+                "(BattleID serial PRIMARY KEY, " +
+                "Rounds text, " +
+                "Looser text, " +
+                "Winner text)";
+            ExecuteNonQuery(createBattleLogs);
         }
 
-        public void InsertCardData()
+        public static void InsertCardData()
         {
             string insertDataQuery = "INSERT INTO Cards (Name, Damage, Region, Type) VALUES " +
                 // Water
@@ -44,16 +77,21 @@ namespace MTCG.Database
                 "('AnotherNormalSpell', 18, 'NORMAL', 'SPELL')";
 
             ExecuteNonQuery(insertDataQuery);
+
+            string query = "INSERT INTO Users (Username, StackID, DeckID, Coins, Elo, BattleCount, Password) " +
+                           "VALUES ('SeedUser', null, null, 20, 100, 0, 'debian123')";
+
+            ExecuteNonQuery(query);
         }
 
 
-        public void ClearDatabase()
+        public static void ClearDatabase()
         {
-            string clearDatabaseQuery = "DROP TABLE IF EXISTS Cards";
+            string clearDatabaseQuery = "DROP TABLE IF EXISTS Stacks, Decks, Cards, Users";
             ExecuteNonQuery(clearDatabaseQuery);
         }
 
-        private void ExecuteNonQuery(string query)
+        private static void ExecuteNonQuery(string query)
         {
             try
             {
@@ -72,5 +110,74 @@ namespace MTCG.Database
                 dataHandler.CloseConnection();
             }
         }
+
+        #region Tesing
+
+        public static void PrintTableContents()
+        {
+            // Print Cards table
+            string selectCards = "SELECT * FROM Cards";
+            PrintTable("Cards", selectCards);
+
+            // Print Stacks table
+            string selectStacks = "SELECT * FROM Stacks";
+            PrintTable("Stacks", selectStacks);
+
+            // Print Decks table
+            string selectDecks = "SELECT * FROM Decks";
+            PrintTable("Decks", selectDecks);
+
+            // Print Users table
+            string selectUsers = "SELECT * FROM Users";
+            PrintTable("Users", selectUsers);
+
+            // Print BattleLogs table
+            string selectBattleLogs = "SELECT * FROM BattleLogs";
+            PrintTable("BattleLogs", selectBattleLogs);
+        }
+
+        private static void PrintTable(string tableName, string selectQuery)
+        {
+            try
+            {
+                dataHandler.OpenConnection();
+
+                using (var cmd = new NpgsqlCommand(selectQuery, dataHandler.Connection))
+                using (var reader = cmd.ExecuteReader())
+                {
+                    Console.WriteLine($"Table: {tableName}");
+                    Console.WriteLine("--------------------------------------------------");
+
+                    for (int i = 0; i < reader.FieldCount; i++)
+                    {
+                        Console.Write(reader.GetName(i) + "\t");
+                    }
+
+                    Console.WriteLine(); // New line after column names
+
+                    while (reader.Read())
+                    {
+                        for (int i = 0; i < reader.FieldCount; i++)
+                        {
+                            Console.Write(reader[i] + "\t");
+                        }
+                        Console.WriteLine(); // New line after each row
+                    }
+
+                    Console.WriteLine("--------------------------------------------------\n\n\n");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error retrieving data from {tableName}: {ex.Message}");
+            }
+            finally
+            {
+                dataHandler.CloseConnection();
+            }
+        }
+
+
+        #endregion
     }
 }

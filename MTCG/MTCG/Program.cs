@@ -1,9 +1,6 @@
 ﻿using MTCG.Cards;
 using MTCG.Database;
 using MTCG.Users;
-using Npgsql;
-using System.Collections.Generic;
-using System.Drawing;
 using System.Net.Sockets;
 using System.Net;
 using System.Text;
@@ -11,156 +8,111 @@ using Newtonsoft.Json;
 
 namespace MTCG
 {
+    //curl -X POST -H "Content-Type: application/json" -d "{\"username\": \"TestUser\", \"password\": \"debain123\"}" --verbose http://localhost:10001/users
+
     internal class Program
     {
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
-            // Start the server on a separate thread
-            Thread serverThread = new Thread(ServerThread);
-            serverThread.Start();
+            Seed.Seeding();
+            Seed.PrintTableContents();
+            string baseUrl = "http://localhost:10001/";
+            var listener = new HttpListener();
+            listener.Prefixes.Add(baseUrl);
+            listener.Start();
 
-            // Press Enter to stop the server
-            Console.ReadLine();
-        }
+            Console.WriteLine($"Server listening at {baseUrl}");
 
-        static void ServerThread()
-        {
-            // Set up the server socket
-            TcpListener server = new TcpListener(IPAddress.Any, 8888);
-            server.Start();
-
-            Console.WriteLine("Server started. Listening for clients...");
-
-            try
+            while (true)
             {
-                while (true)
-                {
-                    // Accept a new client connection
-                    TcpClient client = server.AcceptTcpClient();
-
-                    // Start a new thread to handle the client
-                    Thread clientThread = new Thread(HandleClientThread);
-                    clientThread.Start(client);
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error: {ex.Message}");
-            }
-            finally
-            {
-                server.Stop();
+                var context = await listener.GetContextAsync();
+                await Task.Run(() => ProcessRequest(context));
             }
         }
 
-        static void HandleClientThread(object clientObj)
+        static async Task ProcessRequest(HttpListenerContext context)
         {
-            using (TcpClient client = (TcpClient)clientObj)
+            var request = context.Request;
+            var response = context.Response;
+
+            string responseString = "";
+            string method = request.HttpMethod.ToUpper();
+
+            switch (request.Url.LocalPath.ToLower())
             {
-                try
-                {
-                    NetworkStream stream = client.GetStream();
-                    byte[] data = new byte[1024];
-                    int bytesRead = stream.Read(data, 0, data.Length);
-                    string clientMessage = Encoding.ASCII.GetString(data, 0, bytesRead);
-
-                    Console.WriteLine($"Received from client: {clientMessage}");
-
-                    // Parse the client message (assuming it's in JSON format)
-                    var requestData = JsonConvert.DeserializeObject<Dictionary<string, string>>(clientMessage);
-
-                    // Check if it's a login request
-                    if (requestData.ContainsKey("Username") && requestData.ContainsKey("Password"))
+                case "/users":
+                    if (method == "POST")
                     {
-                        string username = requestData["Username"];
-                        string password = requestData["Password"];
+                        using (var reader = new StreamReader(request.InputStream, request.ContentEncoding))
+                        {
+                            string requestBody = await reader.ReadToEndAsync();
+                          
+                            User user = JsonConvert.DeserializeObject<User>(requestBody); 
+                            if (UserRepository.GetUserByUsername(user.Username) == null)
+                            {
+                                UserRepository.CreateUser(user);
+                                responseString = "User registered successfully.";
+                            }
+                            else
+                            {
+                                responseString = "Username already taken.";
+                                response.StatusCode = (int)HttpStatusCode.Conflict;
+                            }               
+                        }  
+                    }
+                    break;
 
-                        // Authenticate the user (replace this with your actual authentication logic)
-                        if (AuthenticateUser(username, password))
+                case "/sessions":
+                    if (method == "POST")
+                    {
+                        using (var reader = new StreamReader(request.InputStream, request.ContentEncoding))
                         {
-                            // Successful login response
-                            string responseMessage = "Login successful!";
-                            byte[] responseBytes = Encoding.ASCII.GetBytes(responseMessage);
-                            stream.Write(responseBytes, 0, responseBytes.Length);
-                        }
-                        else
-                        {
-                            // Failed login response
-                            string responseMessage = "Invalid credentials!";
-                            byte[] responseBytes = Encoding.ASCII.GetBytes(responseMessage);
-                            stream.Write(responseBytes, 0, responseBytes.Length);
+                            string requestBody = await reader.ReadToEndAsync();
+                            User user = JsonConvert.DeserializeObject<User>(requestBody);
+                            if (UserRepository.ValidateUserCredentials(user.Username, user.Password))
+                            {
+                                //TOKEN SETZTEN TO DO
+                                responseString = "User logged in successfully.";
+                            }
+                            else
+                            {
+                                responseString = "Invalid username or password for login.";
+                                response.StatusCode = (int)HttpStatusCode.Unauthorized;
+                            }
                         }
                     }
-                    else
+                    break;
+
+                case "/packages":
+                    if (method == "POST")
                     {
-                        // Handle other types of requests
-                        // ...
+                        using (var reader = new StreamReader(request.InputStream, request.ContentEncoding))
+                        {
+                            string requestBody = await reader.ReadToEndAsync();
+                            // Deserialize the JSON content using JSON.NET
+                            // Perform package creation logic
+                        }
+
+                        responseString = "Package created successfully.";
                     }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error handling client: {ex.Message}");
-                }
+                    break;
+
+                default:
+                    responseString = "Invalid endpoint.";
+                    response.StatusCode = (int)HttpStatusCode.NotFound;
+                    break;
             }
-        }
 
-        static bool AuthenticateUser(string username, string password)
-        {
-            // In a real-world scenario, you would query your database to check credentials
-            // For simplicity, this example hardcodes a user
-            //var user = new User { Username = "kienboec", Password = "daniel" };
+            await Console.Out.WriteLineAsync($"Send to Client: {responseString}");
+            byte[] buffer = Encoding.UTF8.GetBytes(responseString);
+            response.ContentLength64 = buffer.Length;
 
-            //return user.Username == username && user.Password == password;
-            return true;
-        }
-
-
-        public static void AddRandomCardsToDeck(List<Card> stack, List<Card> deck, int numberOfCardsToAdd)
-        {
-            Random random = new Random();
-
-            for (int i = 0; i < numberOfCardsToAdd; i++)
+            using (var output = response.OutputStream)
             {
-                int randomIndex = random.Next(0, stack.Count);
-
-                // Add a copy of the randomly selected card to the deck
-                deck.Add(new Card(stack[randomIndex].Name, stack[randomIndex].Damage, stack[randomIndex].Region, stack[randomIndex].Type));
-            }
-        }
-
-        public void Test()
-        {
-            DataHandler dataHandler = new DataHandler("localhost", "5432", "mtcgdb", "postgres", "debian123");
-            Seed seed = new Seed(dataHandler);
-            List<Card> stack = new List<Card>();
-
-            //TEST DB and SEED
-            seed.ClearDatabase();
-            seed.CreateCardsTable();
-            seed.InsertCardData();
-
-            string selectDataQuery = "SELECT * FROM Cards";
-            using (var reader = dataHandler.ExecuteSelectQuery(selectDataQuery))
-            {
-                while (reader.Read())
-                {
-                    stack.Add(new Card(
-                        reader["Name"].ToString(),
-                        Convert.ToInt32(reader["Damage"]),
-                        dataHandler.ERegionsConverter(reader["Region"].ToString()),
-                        dataHandler.ETypeConverter(reader["Type"].ToString())
-                    ));
-
-                    Console.WriteLine($"Name: {reader["Name"]}, Damage: {reader["Damage"]}, Region: {reader["Region"]}, Type: {reader["Type"]}");
-                }
+                await output.WriteAsync(buffer, 0, buffer.Length);
             }
 
-
-            List<Card> deck = new List<Card>();
-            AddRandomCardsToDeck(stack, deck, 5);
-            GameController controller = new GameController();
-            controller.StartGame(new User(stack, deck, 20, 100, 0, "UserONE", "abc"));
+            response.Close();
         }
-
     }
 }

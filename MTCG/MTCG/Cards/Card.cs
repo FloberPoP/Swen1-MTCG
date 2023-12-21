@@ -12,7 +12,7 @@ namespace MTCG.Cards
     //normal -> water
     public enum ERegions { WATER, FIRE, NORMAL };
     public enum EType { SPELL, MONSTER}
-    internal class Card
+    public class Card
     {
         public int CardsID { get; set; }
         public string Name { get; set; }

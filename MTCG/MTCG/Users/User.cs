@@ -3,32 +3,39 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using MTCG.Battling;
 using MTCG.Cards;
+using Newtonsoft.Json;
 
 namespace MTCG.Users
 {
-    internal class User
-    {
-        public User(List<Card> stack, List<Card> deck, int? coins, int? elo, int? battleCount, string username, string password)
+    public class User
+    {      
+        public User(string username, string password)
         {
-            Stack = stack;
-            Deck = deck;
-            Coins = coins;
-            Elo = elo;
+            Stack = new List<Card>();
+            Deck = new List<Card>();
+            Coins = 20;
+            Elo = 100;
             Username = username;
             Password = password;
-            BattleCount = battleCount;
+            BattleCount = 0;
         }
 
+        public int StackID { get; set; }
         public List<Card> Stack { get; set; }
+        public int DeckID { get; set; }
         public List<Card> Deck { get; set; }
         public int? Coins { get; set; }
         public int? Elo {  get; set; }
 
         public int? BattleCount { get; set; }
+
+       
         public string Username { get; set; }
+
         public string Password { get; set; }
         public void ManageDeck()
         {
@@ -41,7 +48,7 @@ namespace MTCG.Users
 
         public void Battle()
         {
-            Battle b = new Battle();
+            /*Battle b = new Battle();
             //get from DB
             List<Card> stack = new List<Card>();
             List<Card> deck = new List<Card>
@@ -54,7 +61,7 @@ namespace MTCG.Users
             };
             User playerB = new User(stack, deck, 20, 100, 0, "UserTWO", "abc");
             BattleLog log = b.StartBattle(this, playerB);
-            log.Print();
+            log.Print();*/
         }
 
         public void Login()

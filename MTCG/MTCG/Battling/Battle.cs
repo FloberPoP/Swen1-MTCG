@@ -1,209 +1,88 @@
-﻿using MTCG.Users;
-using MTCG.Cards;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System;
 using System.Text;
-using System.Threading.Tasks;
-using System.Net.Http.Headers;
-using System.ComponentModel.Design;
+using MTCG.Cards;
+using MTCG.Users;
 
 namespace MTCG.Battling
 {
     internal class Battle
     {
-        User Attacker { get; set; }
-        User Defender { get; set; }
-        public BattleLog Log { get; protected set; }
+        private StringBuilder rounds;
+        private User winner;
+        private User looser;
 
-        public Battle(User playerOne, User playerTwo)
+        public Battle()
         {
-            Attacker = playerOne;
-            Defender = playerTwo;
-            Attacker.Mana = 0; 
-            Defender.Mana = 0;
-            Attacker.Health = 10;
-            Defender.Health = 10;
+            rounds = new StringBuilder();
         }
 
-        public void BattleStart()
+        public BattleLog StartBattle(User playerA, User playerB)
         {
-            int roundNumber = 1;
-            while (CheckPlayers())
+            List<Card> deckA = playerA.Deck;
+            List<Card> deckB = playerB.Deck;
+
+            // Battle for up to 100 rounds
+            for (int round = 1; round <= 100; round++)
             {
-                Console.WriteLine($"Round {roundNumber}");
-                Log.AddMessage($"Round {roundNumber}");
-                if (roundNumber % 2 != 0)
-                    PlayRound(Attacker, Defender);
+                // Draw cards from the decks for the current round
+                Card cardA = DrawCard(deckA);
+                Card cardB = DrawCard(deckB);
+
+                // Calculate damage for the round
+                int damageA = cardA.CalculateDamage(cardB);
+                int damageB = cardB.CalculateDamage(cardA);
+
+                // Determine the winner of the round
+                if (damageA > damageB)
+                {
+                    deckB.Remove(cardB);
+                    deckA.Add(cardB);
+                    rounds.AppendLine($"{playerB.Username}: {cardB.Name} ({damageB} Damage) defeated {playerA.Username}: {cardA.Name} ({damageA} Damage)");
+                }
+                else if (damageB > damageA)
+                {
+                    deckA.Remove(cardA);
+                    deckB.Add(cardA);
+                    rounds.AppendLine($"{playerA.Username}: {cardA.Name} ({damageA} Damage) defeated {playerB.Username}: {cardB.Name} ({damageB} Damage)");
+                }
                 else
-                    PlayRound(Defender, Attacker);
-                roundNumber++;
-                RoundOver(roundNumber - 1);
-            }
-
-            if (Attacker.Health <= 0)
-            {
-                Log.AddMessage($"{Attacker.Username} Lost.");
-                Log.AddMessage($"{Defender.Username} Won.");
-                Console.WriteLine($"{Attacker.Username} Lost.");
-                Console.WriteLine($"{Defender.Username} Won.");
-            }
-            else if (Defender.Health <= 0)
-            {
-                Log.AddMessage($"{Defender.Username} Lost.");
-                Log.AddMessage($"{Attacker.Username} Won.");
-                Console.WriteLine($"{Defender.Username} Lost.");
-                Console.WriteLine($"{Attacker.Username} Won.");
-            }
-        }
-
-        private void PlayRound(User attacker, User defender)
-        {
-            Card attackingCard = SelectRandomCard(attacker.Deck, 'a');
-            Card defendingCard = SelectRandomCard(defender.Deck, 'a');
-            ShowBattlefield();
-
-            switch (CheckCard(attackingCard, defender.Deck, attacker))
-            {
-                case 0:
-                    // Champion VS Champion
-                    if (attackingCard is Champion attackingChampion && defendingCard is Champion defenderChampion)
-                    {
-                        SomethingVSChampion(attackingChampion, defenderChampion);
-                        SomethingVSChampion(defenderChampion, attackingChampion);
-                    }
-                    // Spell vs Champion
-                    else if (attackingCard is Spell attackerSpell && defendingCard is Champion defenderChampion) 
-                    {
-                        if (attackerSpell.SpellType == ESpellType.DAMAGE)
-                            SomethingVSChampion(attackerSpell, defenderChampion);
-                        else(attackerSpell.SpellType == ESpellType.HEAL)
-                        {
-                            Champion tmpChampion = (Champion)SelectRandomCard(attacker.Deck, 'c');
-                            tmpChampion.UpdateHealth(attackerSpell.CastAbility());
-                        }
-                               
-
-                    }
-                    // If the defender has a spell
-                    else if (defendingCard is Spell defenderSpell)
-                    {
-                        // Redirect the damage against the player
-                        defender.Health -= attackingCard.CalculateDamage(defenderSpell.Region);
-                        Log.AddMessage($"{attackingCard.Name} attacked {defenderSpell.Name}. Damage redirected to {defender.Username} for {attackingCard.CalculateDamage(defenderSpell.ElementType)}");
-
-                        if (defender.Health <= 0)
-                        {
-                            Log.AddMessage($"{defender.Username} Lost.");
-                            Log.AddMessage($"{attacker.Username} Won.");
-                        }
-                    }
-
-                    // Deduct mana cost from attacker's mana
-                    attacker.Mana -= attackingCard.ManaCost;
-                    break;
-
-                case -1:
-                    Log.AddMessage($"{attacker.Username} doesn't have enough mana.");
-                    break;
-
-                case -2:
-                    Log.AddMessage($"{defender.Username} has no more champions left");
-                    Log.AddMessage($"{defender.Username} got attacked by {attackingCard.Name} for {attackingCard.Damage}");
-                    break;
-            }
-        }
-
-        private void SomethingVSChampion(Card attacker, Champion defender)
-        {
-            defender.UpdateHealth(attacker.CalculateDamage(defender.Region));
-            Log.AddMessage($"{defender.Name} got attacked by {attacker.Name} for {attacker.CalculateDamage(defender.Region)}");
-
-            if (defender.IsDead)
-            {
-                Log.AddMessage($"{defender.Name} Died");
-                defender.IsDead = true;
-            }
-        }
-        private void RoundOver(int count)
-        {
-            count = count * 2 > 8 ? 4 : count;
-            Attacker_Mana += count * 2;
-            Defender_Mana += count * 2;
-        }
-
-        private int CheckCard(Card c, Deck d, User player)
-        {
-            if (c.ManaCost > player.Mana) // change to Defender_Mana or Attacker_Mana
-            {
-                return -1;
-            }
-
-            if (!d.Cards.Any(card => card is Champion))
-            {
-                return -2;
-            }
-
-            return 0;
-
-        }
-
-        private bool CheckPlayers()
-        {
-            if (Attacker_Health <= 0 || Attacker.Deck == null || Attacker.Deck.Cards == null || Attacker.Deck.Cards.Count == 0)
-            {
-                return false;
-            }
-            else if (Attacker_Health <= 0 || Defender.Deck == null || Defender.Deck.Cards == null || Defender.Deck.Cards.Count == 0)
-            {
-                return false;
-            }
-            return true;
-        }
-
-        private Card SelectRandomCard(Deck d, char c)
-        {
-            if (d.Cards == null || d.Cards.Count == 0)
-            {
-                throw new NullReferenceException("Deck ist null oder leer");
-            }
-
-           
-
-            if (c == 'c')
-            {
-                List<Card> champions = d.Cards.Where(card => card is Champion).ToList();
-                if (champions.Count == 0)
                 {
-                    throw new Exception("Keine Champions im Deck gefunden");
+                    rounds.AppendLine($"Round {round} is a draw");
                 }
-                int randomIndex = random.Next(champions.Count);
-                return champions[randomIndex];
-            }
-            else if (c == 's')
-            {
-                List<Card> spells = d.Cards.Where(card => card is Spell).ToList();
-                if (spells.Count == 0)
+
+                if (deckA.Count == 0)
                 {
-                    throw new Exception("Keine Zaubersprüche (Spells) im Deck gefunden");
+                    winner = playerB;
+                    looser = playerA;
+                    break;
                 }
-                int randomIndex = random.Next(spells.Count);
-                return spells[randomIndex];
+                else if (deckB.Count == 0)
+                {
+                    winner = playerA;
+                    looser = playerB;
+                    break;
+                }
             }
-            else if (c == 'a')
+
+            if (winner == null && looser == null)
             {
-                int randomIndex = random.Next(d.Cards.Count);
-                return d.Cards[randomIndex];
+                rounds.AppendLine("The battle is a draw (exceeded 100 rounds).");
             }
-            else
-            {
-                throw new ArgumentException("Ungültiges Zeichen. Es sollte 'c', 's' oder 'a' sein.");
-            }
+
+            
+            // Update player stats (BattleCount and ELO calculation) => in DB over username
+
+            return new BattleLog(rounds, looser, winner);
         }
 
-        private void ShowBattlefield()
+        private Card DrawCard(List<Card> cards) 
         {
-            UI.ShowBattlefield(Attacker, Defender);
+            Random random = new Random();
+            int randomIndex = random.Next(cards.Count);
+
+            Card drawnCard = cards[randomIndex];
+
+            return drawnCard;
         }
     }
 }

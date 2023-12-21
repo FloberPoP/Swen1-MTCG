@@ -95,12 +95,13 @@ namespace MTCG
             return Console.ReadLine();
         }
 
-        public static void ShowDeck(Deck d) 
+        public static void ShowDeck() 
         {
            
         }
 
         #region Show Battle Field
+        /*
         public static void ShowBattlefield(User c1, User c2)
         {
             int sideLength = Math.Max(Math.Max(Math.Max(CalculateSideLength(c1.Deck.Cards.Where(x => x is Champion).ToList()),
@@ -187,6 +188,7 @@ namespace MTCG
 
             return length +3+3*count;
         }
+        */
         #endregion
     }
 }

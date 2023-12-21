@@ -10,11 +10,26 @@ namespace MTCG.Battling
     internal class BattleLog
     {
         public int BattleID { get; set; }
-        public User Participants { get; set; }
-        public StringBuilder Rounds { get; set; }
 
+        public StringBuilder Rounds { get; set; }
+        public User Looser { get; set; }
         public User Winner { get; set; }
 
-        public void AddMessage(string str) { Rounds.Append(str); }
+        public BattleLog(StringBuilder rounds, User looser, User winner)
+        {
+            Rounds = rounds;
+            Looser = looser;
+            Winner = winner;
+        }
+        public void AddMessage(string str) { Rounds.Append($"{str}\n"); }
+
+        public void Print()
+        {
+            
+            Console.WriteLine("Rounds:");
+            Console.WriteLine(Rounds.ToString());
+            Console.WriteLine($"\n\nWinner: {Winner.Username}");
+            Console.WriteLine($"Looser: {Looser.Username}");
+        }
     }
 }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Npgsql;
 
@@ -19,20 +20,32 @@ namespace MTCG.Database
         public void CreateCardsTable()
         {
             string createTableQuery = "CREATE TABLE IF NOT EXISTS Cards " +
-                "(CardsID serial PRIMARY KEY, Name text, Damage int, ManaCost int, Region text, IsDead boolean, SpellType text, MaxHealth int, CurrentHealth int, Stuned boolean)";
+                "(CardsID serial PRIMARY KEY, Name text, Damage int, Region text, Type text)";
             ExecuteNonQuery(createTableQuery);
         }
 
         public void InsertCardData()
         {
-            string insertDataQuery = "INSERT INTO Cards (Name, Healthpoints, IsDead) VALUES " +
-                "('Viego', 5, 3, 'SHADOWISLES', false, NULL, 8, 8, false), " +
-                "('Garen', 6, 2, 'DEMACIA', false, NULL, 10, 10, false), " +
-                "('Cho`Gath', 7, 4, 'VOID', false, NULL, 15, 15, false), " +
-                "('Smite', 5, 3, 'DEMACIA', NULL, 'DAMAGE', NULL, NULL, NULL), " +
-                "('Cage', 0, 5, 'SHADOWISLES', NULL, 'STUN', NULL, NULL, NULL)";
+            string insertDataQuery = "INSERT INTO Cards (Name, Damage, Region, Type) VALUES " +
+                // Water
+                "('WaterGoblin', 10, 'WATER', 'MONSTER'), " +
+                "('WaterSpell', 20, 'WATER', 'SPELL'), " +
+                "('AnotherWaterSpell', 15, 'WATER', 'SPELL'), " +
+                "('WaterSerpent', 30, 'WATER', 'MONSTER'), " +
+                // Fire
+                "('Dragon', 50, 'FIRE', 'MONSTER'), " +
+                "('FireSpell', 25, 'FIRE', 'SPELL'), " +
+                "('AnotherFireSpell', 30, 'FIRE', 'SPELL'), " +
+                "('FirePhoenix', 55, 'FIRE', 'MONSTER'), " +
+                // Normal
+                "('Ork', 45, 'NORMAL', 'MONSTER'), " +
+                "('Golem', 40, 'NORMAL', 'MONSTER'), " +
+                "('NormalSpell', 25, 'NORMAL', 'SPELL'), " +
+                "('AnotherNormalSpell', 18, 'NORMAL', 'SPELL')";
+
             ExecuteNonQuery(insertDataQuery);
         }
+
 
         public void ClearDatabase()
         {

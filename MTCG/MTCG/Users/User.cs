@@ -1,15 +1,17 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using MTCG.Battling;
+using MTCG.Cards;
 
 namespace MTCG.Users
 {
     internal class User
     {
-        public User(Stack? stack, Deck? deck, int? coins, int? elo, string username, string password)
+        public User(List<Card> stack, List<Card> deck, int? coins, int? elo, int? battleCount, string username, string password)
         {
             Stack = stack;
             Deck = deck;
@@ -17,25 +19,19 @@ namespace MTCG.Users
             Elo = elo;
             Username = username;
             Password = password;
+            BattleCount = battleCount;
         }
 
-        public Stack? Stack { get; set; }
-        public Deck? Deck { get; set; }
-
+        public List<Card> Stack { get; set; }
+        public List<Card> Deck { get; set; }
         public int? Coins { get; set; }
         public int? Elo {  get; set; }
+
+        public int? BattleCount { get; set; }
         public string Username { get; set; }
         public string Password { get; set; }
-        public int Health { get; set; }
-        public int Mana {  get; set; }
         public void ManageDeck()
         {
-            if(Deck != null && Deck.Cards != null) {
-                //Deck.Cards.Clear();
-                //Deck.Cards.Count() == 4
-
-                
-            }
         }
 
         public void BuyCards()
@@ -45,10 +41,20 @@ namespace MTCG.Users
 
         public void Battle()
         {
-            //get Other User from DB
-            User user = null;
-            Battle b = new Battle(this, user);
-            b.BattleStart();
+            Battle b = new Battle();
+            //get from DB
+            List<Card> stack = new List<Card>();
+            List<Card> deck = new List<Card>
+            {
+                new Card("WaterGoblin", 10, ERegions.WATER, EType.MONSTER),
+                new Card("WaterGoblin", 10, ERegions.WATER, EType.MONSTER),
+                new Card("WaterGoblin", 10, ERegions.WATER, EType.MONSTER),
+                new Card("WaterGoblin", 10, ERegions.WATER, EType.MONSTER),
+                new Card("WaterGoblin", 10, ERegions.WATER, EType.MONSTER)
+            };
+            User playerB = new User(stack, deck, 20, 100, 0, "UserTWO", "abc");
+            BattleLog log = b.StartBattle(this, playerB);
+            log.Print();
         }
 
         public void Login()

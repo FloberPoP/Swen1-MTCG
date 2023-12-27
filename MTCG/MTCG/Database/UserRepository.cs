@@ -1,4 +1,5 @@
-﻿using MTCG.Cards;
+﻿using Microsoft.VisualBasic;
+using MTCG.Cards;
 using MTCG.Database;
 using MTCG.Trading;
 using Newtonsoft.Json;
@@ -62,7 +63,7 @@ namespace MTCG.Users
                         username: reader.GetString(reader.GetOrdinal("Username")),
                         password: reader.GetString(reader.GetOrdinal("Password"))
                         );
-
+                    tmp.UserID = reader.GetInt32(reader.GetOrdinal("UsersID"));
                     tmp.Stack = null;// TODO !!!!
                     tmp.Deck = null; // TODO !!!!
                     tmp.Coins = reader.IsDBNull(reader.GetOrdinal("Coins")) ? null : (int?)reader.GetInt32(reader.GetOrdinal("Coins"));
@@ -113,6 +114,125 @@ namespace MTCG.Users
             };
 
             dataHandler.ExecuteNonQuery(query, parameters);
+        }
+
+        public static List<Card> GetUserStack(string username)
+        {
+            string query = "SELECT c.* FROM Cards c " +
+                           "JOIN Stacks s ON c.CardsID = s.CardID " +
+                           "JOIN Users u ON s.UserID = u.UsersID " +
+                           "WHERE u.Username = @username AND s.Trading = false";
+
+            var parameter = new NpgsqlParameter("@username", username);
+
+            List<Card> userStack = new List<Card>();
+
+            using (var reader = dataHandler.ExecuteSelectQuery(query, new NpgsqlParameter[] { parameter }))
+            {
+                while (reader != null && reader.Read())
+                {
+                    Card card = new Card(
+                        reader.GetString(reader.GetOrdinal("Name")),
+                        reader.GetInt32(reader.GetOrdinal("Damage")),
+                        Enum.Parse<ERegions>(reader.GetString(reader.GetOrdinal("Region"))),
+                        Enum.Parse<EType>(reader.GetString(reader.GetOrdinal("Type")))
+                        );
+
+                    userStack.Add(card);
+                }
+            }
+
+            return userStack;
+        }
+
+        public static bool PurchasePackage(string username, int packageKey)
+        {
+            User user = GetUserByUsername(username);
+
+            if (user != null)
+            {
+                Package package = GetPackageByPackageKey(packageKey);
+
+                if (package != null && user.Coins >= package.Price)
+                {
+                    user.Coins -= package.Price;
+                    UpdateUser(user);
+                    CreatePackages(package);
+
+                    foreach (Card card in package.Cards)
+                    {
+                        AddCardToUserStack(user.UserID, card.CardsID);
+                    }
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static void AddCardToUserStack(int userId, int cardId)
+        {
+            string query = "INSERT INTO Stacks (UserID, CardID, Trading) VALUES (@userId, @cardId, false)";
+
+            var parameters = new NpgsqlParameter[]
+            {
+                new NpgsqlParameter("@userId", userId),
+                new NpgsqlParameter("@cardId", cardId)
+            };
+
+            dataHandler.ExecuteNonQuery(query, parameters);
+        }
+
+        private static Package GetPackageByPackageKey(int packageKey)
+        {
+            string query = "SELECT * FROM Packages WHERE PackagesKey = @packageKey";
+
+            var parameter = new NpgsqlParameter("@packageKey", packageKey);
+
+            using (var reader = dataHandler.ExecuteSelectQuery(query, new NpgsqlParameter[] { parameter }))
+            {
+                if (reader != null && reader.Read())
+                {
+                    int packageId = reader.GetInt32(reader.GetOrdinal("PackagesID"));
+                    int cardsId = reader.GetInt32(reader.GetOrdinal("CardsID"));
+                    int price = reader.GetInt32(reader.GetOrdinal("Price"));
+
+                    // Fetch the list of cards in the package
+                    List<Card> cards = GetUserStackByPackageId(packageId);
+
+                    return new Package(packageKey, cards, price);
+                }
+            }
+
+            return null; // Package not found
+        }
+
+        private static List<Card> GetUserStackByPackageId(int packageId)
+        {
+            string query = "SELECT c.* FROM Cards c " +
+                           "JOIN Packages p ON c.CardsID = p.CardsID " +
+                           "WHERE p.PackagesID = @packageId";
+
+            var parameter = new NpgsqlParameter("@packageId", packageId);
+
+            List<Card> cards = new List<Card>();
+
+            using (var reader = dataHandler.ExecuteSelectQuery(query, new NpgsqlParameter[] { parameter }))
+            {
+                while (reader != null && reader.Read())
+                {
+                    Card card = new Card(
+                        reader.GetString(reader.GetOrdinal("Name")),
+                        reader.GetInt32(reader.GetOrdinal("Damage")),
+                        Enum.Parse<ERegions>(reader.GetString(reader.GetOrdinal("Region"))),
+                        Enum.Parse<EType>(reader.GetString(reader.GetOrdinal("Type")))
+                    );
+
+                    cards.Add(card);
+                }
+            }
+
+            return cards;
         }
     }
 }

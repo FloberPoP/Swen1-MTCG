@@ -24,6 +24,7 @@ namespace MTCG.Users
             BattleCount = 0;
         }
 
+        public int UserID { get; set; }
         public int StackID { get; set; }
         public List<Card> Stack { get; set; }
         public int DeckID { get; set; }

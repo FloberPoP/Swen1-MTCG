@@ -8,8 +8,8 @@ namespace MTCG.Database
 
         public static void Seeding()
         {
-            //ClearDatabase();
-            //CreateTables();
+            ClearDatabase();
+            CreateTables();
             //InsertCardData();         
         }
         public static void CreateTables()
@@ -17,8 +17,6 @@ namespace MTCG.Database
             string createCards = "CREATE TABLE IF NOT EXISTS Cards " +
                 "(CardsID serial PRIMARY KEY, Name text, Damage int, Region text, Type text)";
             ExecuteNonQuery(createCards);
-
-
 
             string createUsers = "CREATE TABLE IF NOT EXISTS Users " +
                 "(UsersID serial PRIMARY KEY, " +
@@ -53,8 +51,12 @@ namespace MTCG.Database
             ExecuteNonQuery(createBattleLogs);
 
             string createPackages = "CREATE TABLE IF NOT EXISTS Packages " +
-                 "(PackagesID serial PRIMARY KEY, PackagesKey int, CardsID int REFERENCES Cards(CardsID), Price int)";
+                 "(PackagesID serial PRIMARY KEY, CardsID int REFERENCES Cards(CardsID), Price int)";
             ExecuteNonQuery(createPackages);
+
+            string createPurchases = "CREATE TABLE IF NOT EXISTS Purchases " +
+                "(PurchasesID serial PRIMARY KEY, PackagesID int REFERENCES Packages(PackagesID), UsersID int REFERENCES Users(UsersID))";
+            ExecuteNonQuery(createPurchases);
         }
 
         public static void InsertCardData()
@@ -138,9 +140,13 @@ namespace MTCG.Database
             string selectBattleLogs = "SELECT * FROM BattleLogs";
             PrintTable("BattleLogs", selectBattleLogs);
 
-            // Print BattleLogs table
+            // Print Packages table
             string selectPackages = "SELECT * FROM Packages";
             PrintTable("Packages", selectPackages);
+
+            // Print Purchases table
+            string selectPurchases = "SELECT * FROM Purchases";
+            PrintTable("Purchases", selectPurchases);
         }
 
         private static void PrintTable(string tableName, string selectQuery)

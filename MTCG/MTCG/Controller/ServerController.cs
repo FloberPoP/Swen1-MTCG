@@ -24,6 +24,9 @@ namespace MTCG.Controller
 
             string method = request.HttpMethod.ToUpper();
 
+            string authHeader = "";
+            string token = "";
+
             switch (request.Url.LocalPath.ToLower())
             {
                 case "/users":
@@ -58,8 +61,8 @@ namespace MTCG.Controller
                             if (UserRepository.GetUserByUsername(user.Username) != null && ValidateUserCredentials(user.Username, user.Password))
                             {
                                 // Generate and send JWT token
-                                var token = GenerateToken(user.Username);
-                                clientResponse.response.AddHeader("Authorization", $"Bearer {token}");
+                                var JWTtoken = GenerateToken(user.Username);
+                                clientResponse.response.AddHeader("Authorization", $"Bearer {JWTtoken}");
                                 clientResponse.responseString = "User logged in successfully.";
                             }
                             else
@@ -74,8 +77,8 @@ namespace MTCG.Controller
                 case "/packages":
                     if (method == "POST")
                     {
-                        string authHeader = request.Headers["Authorization"];
-                        string token = authHeader.Replace("Bearer ", string.Empty);
+                        authHeader = request.Headers["Authorization"];
+                        token = authHeader.Replace("Bearer ", string.Empty);
 
                         clientResponse = IsValidToken(request, clientResponse, token);
                         if (clientResponse.response.StatusCode == (int)HttpStatusCode.Unauthorized)
@@ -92,27 +95,24 @@ namespace MTCG.Controller
                     }
                     break;
 
-                case "/transactions/packages": //Random Package
+                case "/transactions/packages": //Testing TODO
                     if(method == "POST")
                     {
-                        string authHeader = request.Headers["Authorization"];
-                        string token = authHeader.Replace("Bearer ", string.Empty);
+                        authHeader = request.Headers["Authorization"];
+                        token = authHeader.Replace("Bearer ", string.Empty);
 
                         clientResponse = IsValidToken(request, clientResponse, token);
                         if (clientResponse.response.StatusCode == (int)HttpStatusCode.Unauthorized)
                             break;
 
-                        using (var reader = new StreamReader(request.InputStream, request.ContentEncoding))
+                        if (!UserRepository.PurchasePackage(ExtractUsernameFromToken(token)))
                         {
-                            string requestBody = await reader.ReadToEndAsync();
-                            //string packageKey = JsonConvert.DeserializeObject<Package>(requestBody);
-                            if (!UserRepository.PurchasePackage(ExtractUsernameFromToken(token), packageKey))
-                                clientResponse.responseString = "User successfully purchased Package";
-                            else
-                            {
-                                clientResponse.responseString = "Not enought Coins";
-                                clientResponse.response.StatusCode = (int)HttpStatusCode.PaymentRequired; 
-                            }
+                            clientResponse.responseString = "User successfully purchased Package";
+                        }
+                        else
+                        {
+                            clientResponse.responseString = "Not enought Coins";
+                            clientResponse.response.StatusCode = (int)HttpStatusCode.PaymentRequired; 
                         }
                     }
                     break;
@@ -121,8 +121,8 @@ namespace MTCG.Controller
                 case "/cards": //Tetsing TODO
                     if (method == "POST")
                     {
-                        string authHeader = request.Headers["Authorization"];
-                        string token = authHeader.Replace("Bearer ", string.Empty);
+                        authHeader = request.Headers["Authorization"];
+                        token = authHeader.Replace("Bearer ", string.Empty);
 
                         clientResponse = IsValidToken(request, clientResponse, token);
                         if (clientResponse.response.StatusCode == (int)HttpStatusCode.Unauthorized)
@@ -136,25 +136,60 @@ namespace MTCG.Controller
                     }
                     break;
 
-                case "/deck":
-                    if (method == "POST")
+                case "/deck": //Testing TODO
+                    authHeader = request.Headers["Authorization"];
+                    token = authHeader.Replace("Bearer ", string.Empty);
+
+                    clientResponse = IsValidToken(request, clientResponse, token);
+                    if (clientResponse.response.StatusCode == (int)HttpStatusCode.Unauthorized)
+                        break;
+
+                    if (method == "GET")
                     {
-                        string authHeader = request.Headers["Authorization"];
-                        string token = authHeader.Replace("Bearer ", string.Empty);
+                        List<Card> deck = UserRepository.GetUserDeck(ExtractUsernameFromToken(token));
+                        string deckJson = JsonConvert.SerializeObject(deck);
 
-                        clientResponse = IsValidToken(request, clientResponse, token);
-                        if (clientResponse.response.StatusCode == (int)HttpStatusCode.Unauthorized)
-                            break;
+                        clientResponse.responseString = deckJson;
+                        clientResponse.response.ContentType = "application/json";
+                    }
+                    else if (method == "PUT")
+                    {
+                        using (var reader = new StreamReader(request.InputStream, request.ContentEncoding))
+                        {
+                            string requestBody = await reader.ReadToEndAsync();
+                            List<string> cardIds = JsonConvert.DeserializeObject<List<string>>(requestBody);
 
-                        //GET username from Token -> return all Cards in deck
+                            if (cardIds.Count == 4)
+                            {
+                                string username = ExtractUsernameFromToken(token);
+                                User user = UserRepository.GetUserByUsername(username);
+                                if (user != null)
+                                {
+                                    UserRepository.ClearUserDeck(user.UserID);
+                                    UserRepository.AddCardToUserDeck(user.UserID, cardIds);
+                                    clientResponse.responseString = "Deck configured successfully.";
+                                }
+                                else
+                                {
+                                    clientResponse.responseString = "User not found.";
+                                    clientResponse.response.StatusCode = (int)HttpStatusCode.NotFound;
+                                }
+                            }
+                            else
+                            {
+                                clientResponse.responseString = "Invalid number of cards. Please provide exactly 4 cards.";
+                                clientResponse.response.StatusCode = (int)HttpStatusCode.BadRequest;
+                            }
+                        }
                     }
                     break;
+
 
                 case "/stats":
                     if (method == "POST")
                     {
-                        string authHeader = request.Headers["Authorization"];
-                        string token = authHeader.Replace("Bearer ", string.Empty);
+                        authHeader = request.Headers["Authorization"];
+                        token = authHeader.Replace("Bearer ", string.Empty);
 
                         clientResponse = IsValidToken(request, clientResponse, token);
                         if (clientResponse.response.StatusCode == (int)HttpStatusCode.Unauthorized)
@@ -168,8 +203,8 @@ namespace MTCG.Controller
                 case "/scoreboard":
                     if (method == "POST")
                     {
-                        string authHeader = request.Headers["Authorization"];
-                        string token = authHeader.Replace("Bearer ", string.Empty);
+                        authHeader = request.Headers["Authorization"];
+                        token = authHeader.Replace("Bearer ", string.Empty);
 
                         clientResponse = IsValidToken(request, clientResponse, token);
                         if (clientResponse.response.StatusCode == (int)HttpStatusCode.Unauthorized)
@@ -182,8 +217,8 @@ namespace MTCG.Controller
                 case "/tradings":
                     if (method == "POST")
                     {
-                        string authHeader = request.Headers["Authorization"];
-                        string token = authHeader.Replace("Bearer ", string.Empty);
+                        authHeader = request.Headers["Authorization"];
+                        token = authHeader.Replace("Bearer ", string.Empty);
 
                         clientResponse = IsValidToken(request, clientResponse, token);
                         if (clientResponse.response.StatusCode == (int)HttpStatusCode.Unauthorized)

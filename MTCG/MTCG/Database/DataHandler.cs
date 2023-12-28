@@ -1,13 +1,10 @@
 ﻿using Npgsql;
 using MTCG.Cards;
+using System;
+using System.Threading.Tasks;
 
 namespace MTCG.Database
 {
-
-    /*
-    DOCKER Befehl:
-    docker run --name MTCG_Container -p 5432:5432 -e POSTGRES_PASSWORD=debian123 -e POSTGRES_DB=mtcgdb -d postgres
-    */
     internal class DataHandler
     {
         private string connectionString;
@@ -46,7 +43,6 @@ namespace MTCG.Database
                     {
                         cmd.Parameters.AddRange(parameters);
                     }
-
                     return cmd.ExecuteReader();
                 }
             }
@@ -68,7 +64,6 @@ namespace MTCG.Database
                     {
                         cmd.Parameters.AddRange(parameters);
                     }
-
                     return cmd.ExecuteNonQuery();
                 }
             }

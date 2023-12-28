@@ -58,9 +58,11 @@ namespace MTCG.Controller
                         {
                             string requestBody = await reader.ReadToEndAsync();
                             User user = JsonConvert.DeserializeObject<User>(requestBody);
-                            if (UserRepository.GetUserByUsername(user.Username) != null && ValidateUserCredentials(user.Username, user.Password))
+
+                            bool isValidUser = ValidateUserCredentials(user.Username, user.Password);
+
+                            if (UserRepository.GetUserByUsername(user.Username) != null && isValidUser)
                             {
-                                // Generate and send JWT token
                                 var JWTtoken = GenerateToken(user.Username);
                                 clientResponse.response.AddHeader("Authorization", $"Bearer {JWTtoken}");
                                 clientResponse.responseString = "User logged in successfully.";
@@ -73,6 +75,7 @@ namespace MTCG.Controller
                         }
                     }
                     break;
+
 
                 case "/packages":
                     if (method == "POST")
@@ -95,7 +98,7 @@ namespace MTCG.Controller
                     }
                     break;
 
-                case "/transactions/packages": //Testing TODO
+                case "/transactions/packages":
                     if(method == "POST")
                     {
                         authHeader = request.Headers["Authorization"];
@@ -105,7 +108,8 @@ namespace MTCG.Controller
                         if (clientResponse.response.StatusCode == (int)HttpStatusCode.Unauthorized)
                             break;
 
-                        if (!UserRepository.PurchasePackage(ExtractUsernameFromToken(token)))
+                        string uname = GetUserNameFromToken(token);
+                        if (UserRepository.PurchasePackage(uname))
                         {
                             clientResponse.responseString = "User successfully purchased Package";
                         }
@@ -118,17 +122,26 @@ namespace MTCG.Controller
                     break;
 
 
-                case "/cards": //Tetsing TODO
-                    if (method == "POST")
+                case "/cards":
+                    if (method == "GET")
                     {
+                        
                         authHeader = request.Headers["Authorization"];
+
+                        if (authHeader == null)
+                        {
+                            clientResponse.responseString = "No authentication Header";
+                            clientResponse.response.StatusCode = (int)HttpStatusCode.BadRequest;
+                            break;
+                        }
+                  
                         token = authHeader.Replace("Bearer ", string.Empty);
 
                         clientResponse = IsValidToken(request, clientResponse, token);
                         if (clientResponse.response.StatusCode == (int)HttpStatusCode.Unauthorized)
                             break;
 
-                        List<Card> stack = UserRepository.GetUserStack(ExtractUsernameFromToken(token));
+                        List<Card> stack = UserRepository.GetUserStack(GetUserNameFromToken(token));
                         string stackJson = JsonConvert.SerializeObject(stack);
 
                         clientResponse.responseString = stackJson;
@@ -146,7 +159,7 @@ namespace MTCG.Controller
 
                     if (method == "GET")
                     {
-                        List<Card> deck = UserRepository.GetUserDeck(ExtractUsernameFromToken(token));
+                        List<Card> deck = UserRepository.GetUserDeck(GetUserNameFromToken(token));
                         string deckJson = JsonConvert.SerializeObject(deck);
 
                         clientResponse.responseString = deckJson;
@@ -156,13 +169,14 @@ namespace MTCG.Controller
                     {
                         using (var reader = new StreamReader(request.InputStream, request.ContentEncoding))
                         {
-                            string requestBody = await reader.ReadToEndAsync();
-                            List<string> cardIds = JsonConvert.DeserializeObject<List<string>>(requestBody);
+                            string requestBody = reader.ReadToEnd();
+                            List<int> cardIds = JsonConvert.DeserializeObject<List<int>>(requestBody);
 
                             if (cardIds.Count == 4)
                             {
-                                string username = ExtractUsernameFromToken(token);
+                                string username = GetUserNameFromToken(token);
                                 User user = UserRepository.GetUserByUsername(username);
+                                //Check if Card ids are in Stack
                                 if (user != null)
                                 {
                                     UserRepository.ClearUserDeck(user.UserID);
@@ -194,7 +208,6 @@ namespace MTCG.Controller
                         clientResponse = IsValidToken(request, clientResponse, token);
                         if (clientResponse.response.StatusCode == (int)HttpStatusCode.Unauthorized)
                             break;
-
                         
                         //GET username from Token -> stats
                     }
@@ -249,7 +262,7 @@ namespace MTCG.Controller
         public static bool ValidateUserCredentials(string username, string password)
         {
             User user = UserRepository.GetUserByUsername(username);
-            if (user.Username == username && password == user.Password)
+            if (user != null && user.Username == username && password == user.Password)
             {
                 return true;
             }
@@ -315,12 +328,16 @@ namespace MTCG.Controller
             return cr;
         }
 
-        private static string ExtractUsernameFromToken(string token)
+        static string GetUserNameFromToken(string tokenString)
         {
             var handler = new JwtSecurityTokenHandler();
-            var jwtToken = handler.ReadToken(token) as JwtSecurityToken;
-            return jwtToken?.Claims?.FirstOrDefault(c => c.Type == "username")?.Value;
-        }
+            var jsonToken = handler.ReadToken(tokenString) as JwtSecurityToken;
 
+            if (jsonToken != null)
+            {
+                return jsonToken?.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value;
+            }
+            return null;
+        }
     }
 }

@@ -34,12 +34,10 @@ namespace MTCG.Users
 
         public static void UpdateUser(User user)
         {
-            string query = "UPDATE Users SET Stack = @stack, Deck = @deck, Coins = @coins, Elo = @elo, BattleCount = @battleCount, Password = @password WHERE Username = @username";
+            string query = "UPDATE Users SET Coins = @coins, Elo = @elo, BattleCount = @battleCount, Password = @password WHERE Username = @username";
 
             var parameters = new NpgsqlParameter[]
             {
-                new NpgsqlParameter("@stack", NpgsqlDbType.Jsonb) { Value = JsonConvert.SerializeObject(user.Stack) },
-                new NpgsqlParameter("@deck",  NpgsqlDbType.Jsonb) { Value = JsonConvert.SerializeObject(user.Deck) },
                 new NpgsqlParameter("@coins", user.Coins),
                 new NpgsqlParameter("@elo", user.Elo),
                 new NpgsqlParameter("@battleCount", user.BattleCount),
@@ -65,8 +63,8 @@ namespace MTCG.Users
                         password: reader.GetString(reader.GetOrdinal("Password"))
                         );
                     tmp.UserID = reader.GetInt32(reader.GetOrdinal("UsersID"));
-                    tmp.Stack = null;// TODO !!!!
-                    tmp.Deck = null; // TODO !!!!
+                    tmp.Stack = GetUserStack(tmp.Username);
+                    tmp.Deck = GetUserDeck(tmp.Username);
                     tmp.Coins = reader.IsDBNull(reader.GetOrdinal("Coins")) ? null : (int?)reader.GetInt32(reader.GetOrdinal("Coins"));
                     tmp.BattleCount = reader.IsDBNull(reader.GetOrdinal("BattleCount")) ? null : (int?)reader.GetInt32(reader.GetOrdinal("BattleCount"));
                     tmp.Elo = reader.IsDBNull(reader.GetOrdinal("Elo")) ? null : (int?)reader.GetInt32(reader.GetOrdinal("Elo"));                
@@ -79,25 +77,37 @@ namespace MTCG.Users
 
         public static void CreatePackages(Package p)
         {
-            string query = "INSERT INTO Packages (PackagesID, CardsID, Price) " +
-                           "VALUES (@packagesID, @cardsid, @price)";
+            string packageQuery = "INSERT INTO Packages (PackagesID, Price) " +
+                                  "VALUES (@packagesID, @price)";
 
-            List<Card> cards = p.Cards;
+            var packageParameters = new NpgsqlParameter[]
+            {
+                new NpgsqlParameter("@packagesID", p.PackageID),
+                new NpgsqlParameter("@price", p.Price)
+            };
 
-            foreach (Card card in cards)
+            // Insert the package entry
+            dataHandler.ExecuteNonQuery(packageQuery, packageParameters);
+
+            // Loop through the cards and associate them with the package
+            foreach (Card card in p.Cards)
             {
                 CreateCard(card);
-                var parameters = new NpgsqlParameter[]
+
+                string cardsQuery = "INSERT INTO PackagesCards (PackagesID, CardsID) " +
+                                    "VALUES (@packagesID, @cardsid)";
+
+                var cardsParameters = new NpgsqlParameter[]
                 {
                     new NpgsqlParameter("@packagesID", p.PackageID),
-                    new NpgsqlParameter("@cardsid", card.CardsID),
-                    new NpgsqlParameter("@price", p.Price)
+                    new NpgsqlParameter("@cardsid", card.CardsID)
                 };
 
-                dataHandler.ExecuteNonQuery(query, parameters);
+                // Insert the association between the package and the card
+                dataHandler.ExecuteNonQuery(cardsQuery, cardsParameters);
             }
-            
         }
+
 
         public static void CreateCard(Card c)
         {
@@ -138,8 +148,9 @@ namespace MTCG.Users
                         Enum.Parse<ERegions>(reader.GetString(reader.GetOrdinal("Region"))),
                         Enum.Parse<EType>(reader.GetString(reader.GetOrdinal("Type")))
                         );
+                    card.CardsID = reader.GetInt32(reader.GetOrdinal("CardsID"));
 
-                    userStack.Add(card);
+                    userStack.Add(card); 
                 }
             }
 
@@ -179,21 +190,20 @@ namespace MTCG.Users
         public static bool PurchasePackage(string username)
         {
             User user = GetUserByUsername(username);
-
             if (user != null)
             {
                 Package package = GetRandomPackage(user.UserID);
+                package.Cards = GetCardsByPackageId(package.PackageID);
 
                 if (package != null && user.Coins >= package.Price)
                 {
                     user.Coins -= package.Price;
-
                     UpdateUser(user);
-                    CreatePackages(package);
                     AddPurchaseRecord(user.UserID, package.PackageID);
 
                     foreach (Card card in package.Cards)
                     {
+                        Console.WriteLine($"cID: {card.CardsID}");
                         AddCardToUserStack(user.UserID, card.CardsID);
                     }
                     return true;
@@ -244,25 +254,21 @@ namespace MTCG.Users
                 {
                     int packageId = reader.GetInt32(reader.GetOrdinal("PackagesID"));
                     int price = reader.GetInt32(reader.GetOrdinal("Price"));
-
-                    List<Card> cards = GetUserStackByPackageId(packageId);
                     Package package = new Package();
-                    package.Cards = cards;
                     package.Price = price;
-
+                    package.PackageID = packageId;
                     return package;
                 }
             }
-
             return null;
         }
 
 
-        private static List<Card> GetUserStackByPackageId(int packageId)
+        private static List<Card> GetCardsByPackageId(int packageId)
         {
             string query = "SELECT c.* FROM Cards c " +
-                           "JOIN Packages p ON c.CardsID = p.CardsID " +
-                           "WHERE p.PackagesID = @packageId";
+                           "JOIN PackagesCards pc ON c.CardsID = pc.CardsID " +
+                           "WHERE pc.PackagesID = @packageId";
 
             var parameter = new NpgsqlParameter("@packageId", packageId);
 
@@ -272,13 +278,15 @@ namespace MTCG.Users
             {
                 while (reader != null && reader.Read())
                 {
-                    Card card = new Card(
+                    Card card = new Card
+                    (
                         reader.GetString(reader.GetOrdinal("Name")),
                         reader.GetInt32(reader.GetOrdinal("Damage")),
                         Enum.Parse<ERegions>(reader.GetString(reader.GetOrdinal("Region"))),
-                        Enum.Parse<EType>(reader.GetString(reader.GetOrdinal("Type")))
+                        Enum.Parse < EType >(reader.GetString(reader.GetOrdinal("Type")))
                     );
 
+                    card.CardsID = reader.GetInt32(reader.GetOrdinal("CardsID"));
                     cards.Add(card);
                 }
             }
@@ -295,22 +303,19 @@ namespace MTCG.Users
             dataHandler.ExecuteNonQuery(query, new NpgsqlParameter[] { parameter });
         }
 
-        public static void AddCardToUserDeck(int userId, List<string> cardIDs)
+        public static void AddCardToUserDeck(int userId, List<int> cardIDs)
         {
             string query = "INSERT INTO Decks (UserID, CardID) VALUES (@userId, @cardId)";
 
-            foreach (string cardId in cardIDs)
+            foreach (int cardId in cardIDs)
             {
-                if (Guid.TryParse(cardId, out Guid parsedCardId))
+                var parameters = new NpgsqlParameter[]
                 {
-                    var parameters = new NpgsqlParameter[]
-                    {
-                        new NpgsqlParameter("@userId", userId),
-                        new NpgsqlParameter("@cardId", cardId)
-                    };
+                    new NpgsqlParameter("@userId", userId),
+                    new NpgsqlParameter("@cardId", cardId)
+                };
 
-                    dataHandler.ExecuteNonQuery(query, parameters);
-                }
+                dataHandler.ExecuteNonQuery(query, parameters);
             }
         }
     }

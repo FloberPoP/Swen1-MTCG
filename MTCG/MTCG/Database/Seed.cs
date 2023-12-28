@@ -8,14 +8,15 @@ namespace MTCG.Database
 
         public static void Seeding()
         {
-            ClearDatabase();
-            CreateTables();
-            //InsertCardData();         
+            //ClearDatabase();
+            //ClearPurchases();
+            //CreateTables();
+            //InsertUser();
+            //InsertCardData();        
         }
         public static void CreateTables()
         {
-            string createCards = "CREATE TABLE IF NOT EXISTS Cards " +
-                "(CardsID serial PRIMARY KEY, Name text, Damage int, Region text, Type text)";
+            string createCards = "CREATE TABLE IF NOT EXISTS Cards (CardsID serial PRIMARY KEY, Name text, Damage int, Region text, Type text)";
             ExecuteNonQuery(createCards);
 
             string createUsers = "CREATE TABLE IF NOT EXISTS Users " +
@@ -51,8 +52,12 @@ namespace MTCG.Database
             ExecuteNonQuery(createBattleLogs);
 
             string createPackages = "CREATE TABLE IF NOT EXISTS Packages " +
-                 "(PackagesID serial PRIMARY KEY, CardsID int REFERENCES Cards(CardsID), Price int)";
+                 "(PackagesID serial PRIMARY KEY, Price int)";
             ExecuteNonQuery(createPackages);
+
+            string createPackagesCards = "CREATE TABLE IF NOT EXISTS PackagesCards " +
+                 "(PackageCardID serial PRIMARY KEY, PackagesID int REFERENCES Packages(PackagesID), CardsID int REFERENCES Cards(CardsID))";
+            ExecuteNonQuery(createPackagesCards);
 
             string createPurchases = "CREATE TABLE IF NOT EXISTS Purchases " +
                 "(PurchasesID serial PRIMARY KEY, PackagesID int REFERENCES Packages(PackagesID), UsersID int REFERENCES Users(UsersID))";
@@ -80,20 +85,23 @@ namespace MTCG.Database
 
             ExecuteNonQuery(insertDataQuery);
 
-            string query = "INSERT INTO Users (Username, StackID, DeckID, Coins, Elo, BattleCount, Password) " +
-                           "VALUES ('SeedUser', null, null, 20, 100, 0, 'debian123')";
-
-            ExecuteNonQuery(query);
+            ExecuteNonQuery("INSERT INTO Users (Username, StackID, DeckID, Coins, Elo, BattleCount, Password) VALUES ('SeedUser', null, null, 20, 100, 0, 'debian123')");
         }
 
 
         public static void ClearDatabase()
         {
-            // Drop all tables with CASCADE option
-            string clearDatabaseQuery = "DROP TABLE IF EXISTS Stacks, Decks, Cards, Users, Packages CASCADE";
-            ExecuteNonQuery(clearDatabaseQuery);
+            ExecuteNonQuery("DROP TABLE IF EXISTS Stacks, Decks, Cards, Users, Packages, PackagesCards, Purchases CASCADE");
         }
 
+        public static void ClearPurchases()
+        {
+            ExecuteNonQuery("DROP TABLE IF EXISTS Purchases, Users CASCADE");
+        }
+        private static void InsertUser()
+        {
+            ExecuteNonQuery("INSERT INTO Users (Username, StackID, DeckID, Coins, Elo, BattleCount, Password) VALUES ('kienboec', null, null, 20, 100, 0, 'daniel')");
+        }
 
 
         private static void ExecuteNonQuery(string query)
@@ -143,6 +151,10 @@ namespace MTCG.Database
             // Print Packages table
             string selectPackages = "SELECT * FROM Packages";
             PrintTable("Packages", selectPackages);
+
+            // Print PackagesCards table
+            string selectPackagesCards = "SELECT * FROM PackagesCards";
+            PrintTable("PackagesCards", selectPackagesCards);
 
             // Print Purchases table
             string selectPurchases = "SELECT * FROM Purchases";

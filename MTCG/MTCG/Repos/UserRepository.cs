@@ -1,13 +1,9 @@
-﻿using Microsoft.AspNetCore.Routing.Patterns;
-using Microsoft.VisualBasic;
-using MTCG.Cards;
-using MTCG.Database;
-using MTCG.Trading;
-using Newtonsoft.Json;
+﻿using MTCG.Database;
+using MTCG.Model;
 using Npgsql;
 using NpgsqlTypes;
 
-namespace MTCG.Users
+namespace MTCG.Repos
 {
     internal static class UserRepository
     {
@@ -15,17 +11,16 @@ namespace MTCG.Users
 
         public static void CreateUser(User user)
         {
-            string query = "INSERT INTO Users (Username, StackID, DeckID, Coins, Elo, BattleCount, Password) " +
-                           "VALUES (@username, @stackID, @deckID, @coins, @elo, @battleCount, @password)";
+            string query = "INSERT INTO Users (Username, StackID, DeckID, Coins, Elo, Password) " +
+                           "VALUES (@username, @stackID, @deckID, @coins, @elo, @password)";
 
             var parameters = new NpgsqlParameter[]
             {
                 new NpgsqlParameter("@username", user.Username),
-                new NpgsqlParameter("@stackID", DBNull.Value), 
-                new NpgsqlParameter("@deckID",  DBNull.Value), 
+                new NpgsqlParameter("@stackID", DBNull.Value),
+                new NpgsqlParameter("@deckID",  DBNull.Value),
                 new NpgsqlParameter("@coins", user.Coins),
                 new NpgsqlParameter("@elo", user.Elo),
-                new NpgsqlParameter("@battleCount", user.BattleCount),
                 new NpgsqlParameter("@password", user.Password)
             };
 
@@ -34,14 +29,15 @@ namespace MTCG.Users
 
         public static void UpdateUser(User user)
         {
-            string query = "UPDATE Users SET Coins = @coins, Elo = @elo, BattleCount = @battleCount, Password = @password WHERE Username = @username";
+            string query = "UPDATE Users SET Coins = @coins, Elo = @elo, Password = @password, Bio = @bio, Image = @image WHERE Username = @username";
 
             var parameters = new NpgsqlParameter[]
             {
                 new NpgsqlParameter("@coins", user.Coins),
                 new NpgsqlParameter("@elo", user.Elo),
-                new NpgsqlParameter("@battleCount", user.BattleCount),
                 new NpgsqlParameter("@password", user.Password),
+                new NpgsqlParameter("@bio", user.Bio),
+                new NpgsqlParameter("@image", user.Image),
                 new NpgsqlParameter("@username", user.Username)
             };
 
@@ -65,15 +61,43 @@ namespace MTCG.Users
                     tmp.UserID = reader.GetInt32(reader.GetOrdinal("UsersID"));
                     tmp.Stack = GetUserStack(tmp.Username);
                     tmp.Deck = GetUserDeck(tmp.Username);
-                    tmp.Coins = reader.IsDBNull(reader.GetOrdinal("Coins")) ? null : (int?)reader.GetInt32(reader.GetOrdinal("Coins"));
-                    tmp.BattleCount = reader.IsDBNull(reader.GetOrdinal("BattleCount")) ? null : (int?)reader.GetInt32(reader.GetOrdinal("BattleCount"));
-                    tmp.Elo = reader.IsDBNull(reader.GetOrdinal("Elo")) ? null : (int?)reader.GetInt32(reader.GetOrdinal("Elo"));                
+                    tmp.Coins = reader.IsDBNull(reader.GetOrdinal("Coins")) ? null : reader.GetInt32(reader.GetOrdinal("Coins"));                  
+                    tmp.Elo = reader.IsDBNull(reader.GetOrdinal("Elo")) ? null : reader.GetInt32(reader.GetOrdinal("Elo"));
                     return tmp;
                 }
             }
 
-            return null; // User not found
+            return null;
         }
+
+        public static User GetUserInfoByUsername(string username)
+        {
+            string query = "SELECT Username, Password, Bio, Image FROM Users WHERE Username = @username";
+
+            var parameter = new NpgsqlParameter("@username", username);
+
+            using (var reader = dataHandler.ExecuteSelectQuery(query, new NpgsqlParameter[] { parameter }))
+            {
+                if (reader != null && reader.Read())
+                {
+                    User tmp = new User(
+                        username: reader.GetString(reader.GetOrdinal("Username")),
+                        password: reader.GetString(reader.GetOrdinal("Password"))
+                    );
+
+                    int bioOrdinal = reader.GetOrdinal("Bio");
+                    int imageOrdinal = reader.GetOrdinal("Image");
+
+                    tmp.Bio = reader.IsDBNull(bioOrdinal) ? null : reader.GetString(bioOrdinal);
+                    tmp.Image = reader.IsDBNull(imageOrdinal) ? null : reader.GetString(imageOrdinal);
+
+                    return tmp;
+                }
+            }
+
+            return null;
+        }
+
 
         public static void CreatePackages(Package p)
         {
@@ -86,10 +110,7 @@ namespace MTCG.Users
                 new NpgsqlParameter("@price", p.Price)
             };
 
-            // Insert the package entry
             dataHandler.ExecuteNonQuery(packageQuery, packageParameters);
-
-            // Loop through the cards and associate them with the package
             foreach (Card card in p.Cards)
             {
                 CreateCard(card);
@@ -103,11 +124,9 @@ namespace MTCG.Users
                     new NpgsqlParameter("@cardsid", card.CardsID)
                 };
 
-                // Insert the association between the package and the card
                 dataHandler.ExecuteNonQuery(cardsQuery, cardsParameters);
             }
         }
-
 
         public static void CreateCard(Card c)
         {
@@ -150,7 +169,7 @@ namespace MTCG.Users
                         );
                     card.CardsID = reader.GetInt32(reader.GetOrdinal("CardsID"));
 
-                    userStack.Add(card); 
+                    userStack.Add(card);
                 }
             }
 
@@ -185,7 +204,6 @@ namespace MTCG.Users
 
             return userDeck;
         }
-
 
         public static bool PurchasePackage(string username)
         {
@@ -226,7 +244,6 @@ namespace MTCG.Users
             dataHandler.ExecuteNonQuery(query, parameters);
         }
 
-
         private static void AddCardToUserStack(int userId, int cardId)
         {
             string query = "INSERT INTO Stacks (UserID, CardID, Trading) VALUES (@userId, @cardId, false)";
@@ -263,7 +280,6 @@ namespace MTCG.Users
             return null;
         }
 
-
         private static List<Card> GetCardsByPackageId(int packageId)
         {
             string query = "SELECT c.* FROM Cards c " +
@@ -283,7 +299,7 @@ namespace MTCG.Users
                         reader.GetString(reader.GetOrdinal("Name")),
                         reader.GetInt32(reader.GetOrdinal("Damage")),
                         Enum.Parse<ERegions>(reader.GetString(reader.GetOrdinal("Region"))),
-                        Enum.Parse < EType >(reader.GetString(reader.GetOrdinal("Type")))
+                        Enum.Parse<EType>(reader.GetString(reader.GetOrdinal("Type")))
                     );
 
                     card.CardsID = reader.GetInt32(reader.GetOrdinal("CardsID"));
@@ -317,6 +333,119 @@ namespace MTCG.Users
 
                 dataHandler.ExecuteNonQuery(query, parameters);
             }
+        }
+
+        public static bool AreCardsInUserStack(int userId, List<int> cardIds)
+        {
+            string query = "SELECT COUNT(*) FROM Stacks " +
+                           "WHERE UserID = @userId " +
+                           "AND CardID = ANY(@cardIds) " +
+                           "AND Trading = false";
+
+            var parameters = new NpgsqlParameter[]
+            {
+                new NpgsqlParameter("@userId", userId),
+                new NpgsqlParameter("@cardIds", NpgsqlDbType.Array | NpgsqlDbType.Integer)
+                {
+                    Value = cardIds.ToArray()
+                }
+            };
+
+            int count = Convert.ToInt32(dataHandler.ExecuteSelectQuery(query, parameters));
+
+            return count == cardIds.Count;
+        }
+
+        public static int GetTotalGames(string username)
+        {
+            string query = "SELECT COUNT(*) as TotalGames " +
+                           "FROM BattleLogs WHERE Winner = @username OR Looser = @username";
+
+            var parameter = new NpgsqlParameter("@username", username);
+
+            using (var reader = dataHandler.ExecuteSelectQuery(query, new NpgsqlParameter[] { parameter }))
+            {
+                if (reader != null && reader.Read())
+                {
+                    return Convert.ToInt32(reader["TotalGames"]);
+                }
+            }
+
+            return 0;
+        }
+
+        public static int GetGamesWon(string username)
+        {
+            string query = "SELECT COUNT(*) as GamesWon " +
+                           "FROM BattleLogs WHERE Winner = @username";
+
+            var parameter = new NpgsqlParameter("@username", username);
+
+            using (var reader = dataHandler.ExecuteSelectQuery(query, new NpgsqlParameter[] { parameter }))
+            {
+                if (reader != null && reader.Read())
+                {
+                    return Convert.ToInt32(reader["GamesWon"]);
+                }
+            }
+
+            return 0;
+        }
+
+        public static int GetGamesLost(string username)
+        {
+            string query = "SELECT COUNT(*) as GamesLost " +
+                           "FROM BattleLogs WHERE Looser = @username";
+
+            var parameter = new NpgsqlParameter("@username", username);
+
+            using (var reader = dataHandler.ExecuteSelectQuery(query, new NpgsqlParameter[] { parameter }))
+            {
+                if (reader != null && reader.Read())
+                {
+                    return Convert.ToInt32(reader["GamesLost"]);
+                }
+            }
+
+            return 0;
+        }
+
+        public static int GetTotalSpentCoins(string username)
+        {
+            string query = "SELECT SUM(p.Price) " +
+                           "FROM Purchases pur " +
+                           "JOIN Packages p ON pur.PackagesID = p.PackagesID " +
+                           "JOIN Users u ON pur.UsersID = u.UsersID " +
+                           "WHERE u.Username = @username";
+
+            var parameter = new NpgsqlParameter("@username", username);
+
+            object result = dataHandler.ExecuteSelectQuery(query, new NpgsqlParameter[] { parameter });
+            return result != null ? Convert.ToInt32(result) : 0;
+        }
+
+        public static List<UserScoreboardEntry> GetScoreboard()
+        {
+            string query = "SELECT Username, Elo FROM Users ORDER BY Elo DESC";
+
+            List<UserScoreboardEntry> scoreboard = new List<UserScoreboardEntry>();
+
+            using (var reader = dataHandler.ExecuteSelectQuery(query, null))
+            {
+                while (reader != null && reader.Read())
+                {
+                    string username = reader.GetString(reader.GetOrdinal("Username"));
+                    int elo = reader.GetInt32(reader.GetOrdinal("Elo"));
+
+                    scoreboard.Add(new UserScoreboardEntry
+                    {
+                        Username = username,
+                        Elo = elo
+                    });
+                }
+            }
+
+            return scoreboard;
         }
     }
 }

@@ -56,10 +56,6 @@ echo.
 echo.
 
 
-
-
-
-
 REM --------------------------------------------------
 echo 4) acquire packages kienboec
 curl -X POST http://localhost:10001/transactions/packages --header "Content-Type: application/json" --header "Authorization: Bearer kienboec-mtcgToken" -d ""

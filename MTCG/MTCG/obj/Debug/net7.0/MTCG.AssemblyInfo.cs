@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("MTCG")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e415cee3d7d2d6f32b158f08428eb4f9646dbf59")]
 [assembly: System.Reflection.AssemblyProductAttribute("MTCG")]
 [assembly: System.Reflection.AssemblyTitleAttribute("MTCG")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -1,10 +1,8 @@
 ﻿using Microsoft.IdentityModel.Tokens;
-using MTCG.Cards;
 using MTCG.Database;
-using MTCG.Trading;
-using MTCG.Users;
+using MTCG.Model;
+using MTCG.Repos;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Security.Claims;
@@ -29,7 +27,7 @@ namespace MTCG.Controller
 
             switch (request.Url.LocalPath.ToLower())
             {
-                case "/users":
+                case var path when path.StartsWith("/users", StringComparison.OrdinalIgnoreCase):
                     if (method == "POST")
                     {
                         using (var reader = new StreamReader(request.InputStream, request.ContentEncoding))
@@ -49,6 +47,95 @@ namespace MTCG.Controller
                             }
                         }
                     }
+                    else if (method == "GET")
+                    {
+                        var segments = request.Url.Segments;
+
+                        if (segments.Length >= 3)
+                        {
+                            string username = segments[2].Trim('/');
+                            User user = UserRepository.GetUserInfoByUsername(username);
+
+                            if (user != null)
+                            {
+                                var userInfo = new
+                                {
+                                    user.Username,
+                                    user.Password,
+                                    user.Bio,
+                                    user.Image
+                                };
+
+                                string userInfoJson = JsonConvert.SerializeObject(userInfo);
+                                clientResponse.responseString = userInfoJson;
+                                clientResponse.response.ContentType = "application/json";
+                            }
+                            else
+                            {
+                                clientResponse.responseString = "User not found.";
+                                clientResponse.response.StatusCode = (int)HttpStatusCode.NotFound;
+                            }
+                        }
+                        else
+                        {
+                            clientResponse.responseString = "Invalid endpoint. Please provide a valid username.";
+                            clientResponse.response.StatusCode = (int)HttpStatusCode.BadRequest;
+                        }
+                    }
+
+                    else if (method == "PUT")
+                    {
+                        authHeader = request.Headers["Authorization"];
+                        token = authHeader.Replace("Bearer ", string.Empty);
+
+                        clientResponse = IsValidToken(request, clientResponse, token);
+                        if (clientResponse.response.StatusCode == (int)HttpStatusCode.Unauthorized)
+                            break;
+
+                        string username = request.Url.Segments.Last();
+
+                        using (var reader = new StreamReader(request.InputStream, request.ContentEncoding))
+                        {
+                            string requestBody = await reader.ReadToEndAsync();
+                            dynamic userData = JsonConvert.DeserializeObject(requestBody);
+
+                            User user = UserRepository.GetUserByUsername(username);
+
+                            if (user != null)
+                            {
+                                if (userData.Username != null)
+                                {
+                                    user.Username = userData.Username;
+                                }
+
+                                if (userData.Password != null)
+                                {
+                                    user.Password = userData.Password;
+                                }
+
+                                if (userData.Bio != null)
+                                {
+                                    user.Bio = userData.Bio;
+                                }
+
+                                if (userData.Image != null)
+                                {
+                                    user.Image = userData.Image;
+                                }
+
+                                UserRepository.UpdateUser(user);
+                                var JWTtoken = GenerateToken(user.Username);
+                                clientResponse.responseString = "User updated successfully.";                           
+                                clientResponse.response.AddHeader("Authorization", $"Bearer {JWTtoken}");
+                            }
+                            else
+                            {
+                                clientResponse.responseString = "User not found.";
+                                clientResponse.response.StatusCode = (int)HttpStatusCode.NotFound;
+                            }
+                        }
+                    }
+
                     break;
 
                 case "/sessions":
@@ -149,7 +236,7 @@ namespace MTCG.Controller
                     }
                     break;
 
-                case "/deck": //Testing TODO
+                case "/deck":
                     authHeader = request.Headers["Authorization"];
                     token = authHeader.Replace("Bearer ", string.Empty);
 
@@ -159,11 +246,25 @@ namespace MTCG.Controller
 
                     if (method == "GET")
                     {
-                        List<Card> deck = UserRepository.GetUserDeck(GetUserNameFromToken(token));
-                        string deckJson = JsonConvert.SerializeObject(deck);
+                        string queryString = request.Url.Query;
+                        var queryParameters = System.Web.HttpUtility.ParseQueryString(queryString);
 
-                        clientResponse.responseString = deckJson;
-                        clientResponse.response.ContentType = "application/json";
+                        string format = queryParameters["format"];
+
+                        List<Card> deck = UserRepository.GetUserDeck(GetUserNameFromToken(token));
+
+                        if (format == "plain")
+                        {
+                            string plainTextRepresentation = GeneratePlainTextRepresentation(deck);
+                            clientResponse.responseString = plainTextRepresentation;
+                            clientResponse.response.ContentType = "text/plain";
+                        }
+                        else
+                        {
+                            string deckJson = JsonConvert.SerializeObject(deck);
+                            clientResponse.responseString = deckJson;
+                            clientResponse.response.ContentType = "application/json";
+                        }
                     }
                     else if (method == "PUT")
                     {
@@ -176,8 +277,8 @@ namespace MTCG.Controller
                             {
                                 string username = GetUserNameFromToken(token);
                                 User user = UserRepository.GetUserByUsername(username);
-                                //Check if Card ids are in Stack
-                                if (user != null)
+
+                                if (user != null && UserRepository.AreCardsInUserStack(user.UserID, cardIds))
                                 {
                                     UserRepository.ClearUserDeck(user.UserID);
                                     UserRepository.AddCardToUserDeck(user.UserID, cardIds);
@@ -185,8 +286,8 @@ namespace MTCG.Controller
                                 }
                                 else
                                 {
-                                    clientResponse.responseString = "User not found.";
-                                    clientResponse.response.StatusCode = (int)HttpStatusCode.NotFound;
+                                    clientResponse.responseString = "Invalid card IDs. Only use Card which are in your stack and are currently not in Trading.";
+                                    clientResponse.response.StatusCode = (int)HttpStatusCode.BadRequest;
                                 }
                             }
                             else
@@ -200,7 +301,7 @@ namespace MTCG.Controller
 
 
                 case "/stats":
-                    if (method == "POST")
+                    if (method == "GET")
                     {
                         authHeader = request.Headers["Authorization"];
                         token = authHeader.Replace("Bearer ", string.Empty);
@@ -208,13 +309,38 @@ namespace MTCG.Controller
                         clientResponse = IsValidToken(request, clientResponse, token);
                         if (clientResponse.response.StatusCode == (int)HttpStatusCode.Unauthorized)
                             break;
-                        
-                        //GET username from Token -> stats
+
+                        string username = GetUserNameFromToken(token);
+                        User user = UserRepository.GetUserByUsername(username);
+
+                        if (user != null)
+                        {
+                            int totalGames = UserRepository.GetTotalGames(username);
+                            int gamesWon = UserRepository.GetGamesWon(username);
+                            int gamesLost = UserRepository.GetGamesLost(username);
+                            int spentCoins = UserRepository.GetTotalSpentCoins(username);
+
+                            double winPercentage = totalGames > 0 ? ((double)gamesWon / totalGames) * 100 : 0;
+                            var responseObj = new
+                            {                             
+                                user.Elo,
+                                user.Coins,
+                                TotalGames = totalGames,
+                                GamesWon = gamesWon,
+                                GamesLost = gamesLost,
+                                WinPercentage = winPercentage,
+                                SpentCoins = spentCoins
+                            };
+                            string jsonResponse = JsonConvert.SerializeObject(responseObj);
+                            clientResponse.responseString = jsonResponse;
+                            clientResponse.response.ContentType = "application/json";
+                        }
                     }
                     break;
+
 
                 case "/scoreboard":
-                    if (method == "POST")
+                    if (method == "GET")
                     {
                         authHeader = request.Headers["Authorization"];
                         token = authHeader.Replace("Bearer ", string.Empty);
@@ -223,9 +349,14 @@ namespace MTCG.Controller
                         if (clientResponse.response.StatusCode == (int)HttpStatusCode.Unauthorized)
                             break;
 
-                        //GET username from Token -> scoreboard
+                        List<UserScoreboardEntry> scoreboard = UserRepository.GetScoreboard();
+
+                        string jsonResponse = JsonConvert.SerializeObject(scoreboard);
+                        clientResponse.responseString = jsonResponse;
+                        clientResponse.response.ContentType = "application/json";
                     }
                     break;
+
 
                 case "/tradings":
                     if (method == "POST")
@@ -237,7 +368,21 @@ namespace MTCG.Controller
                         if (clientResponse.response.StatusCode == (int)HttpStatusCode.Unauthorized)
                             break;
 
-                        //GET username from Token -> tradings
+                        string username = GetUserNameFromToken(token);
+                    }
+                    break;
+
+                case "/battles":
+                    if (method == "POST")
+                    {
+                        authHeader = request.Headers["Authorization"];
+                        token = authHeader.Replace("Bearer ", string.Empty);
+
+                        clientResponse = IsValidToken(request, clientResponse, token);
+                        if (clientResponse.response.StatusCode == (int)HttpStatusCode.Unauthorized)
+                            break;
+
+                        string username = GetUserNameFromToken(token);
                     }
                     break;
                 default:
@@ -268,7 +413,19 @@ namespace MTCG.Controller
             }
             return false;
         }
+        private static string GeneratePlainTextRepresentation(List<Card> deck)
+        {
+            StringBuilder plainText = new StringBuilder();
 
+            plainText.AppendLine("Deck:");
+
+            foreach (Card card in deck)
+            {
+                plainText.AppendLine($"\t{card.Name}, Damage: {card.Damage}, Region: {card.Region}, Type: {card.Type}");
+            }
+
+            return plainText.ToString();
+        }
         static string GenerateToken(string username)
         {
             var claims = new[]

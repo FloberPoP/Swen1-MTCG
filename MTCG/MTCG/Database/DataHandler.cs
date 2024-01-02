@@ -1,7 +1,5 @@
 ﻿using Npgsql;
-using MTCG.Cards;
-using System;
-using System.Threading.Tasks;
+using MTCG.Model;
 
 namespace MTCG.Database
 {

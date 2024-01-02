@@ -1,7 +1,5 @@
-﻿using System;
-using System.Text;
-using MTCG.Cards;
-using MTCG.Users;
+﻿using System.Text;
+using MTCG.Model;
 
 namespace MTCG.Battling
 {

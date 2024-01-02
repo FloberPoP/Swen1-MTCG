@@ -8,11 +8,11 @@ namespace MTCG.Database
 
         public static void Seeding()
         {
-            //ClearDatabase();
+            ClearDatabase();
             //ClearPurchases();
-            //CreateTables();
-            //InsertUser();
-            //InsertCardData();        
+            CreateTables();
+            InsertUser();
+            //InsertCardData();
         }
         public static void CreateTables()
         {
@@ -23,11 +23,12 @@ namespace MTCG.Database
                 "(UsersID serial PRIMARY KEY, " +
                 "Username text, " +
                 "Password text, " +
+                "Bio text,"+
+                "Image text,"+
                 "StackID int, " +
                 "DeckID int, " +
                 "Coins int, " +
-                "Elo int, " +
-                "BattleCount int)";
+                "Elo int)";
             ExecuteNonQuery(createUsers);
 
 
@@ -100,7 +101,7 @@ namespace MTCG.Database
         }
         private static void InsertUser()
         {
-            ExecuteNonQuery("INSERT INTO Users (Username, StackID, DeckID, Coins, Elo, BattleCount, Password) VALUES ('kienboec', null, null, 20, 100, 0, 'daniel')");
+            ExecuteNonQuery("INSERT INTO Users (Username, StackID, DeckID, Coins, Elo, Password) VALUES ('kienboec', null, null, 20, 100, 'daniel')");
         }
 
 

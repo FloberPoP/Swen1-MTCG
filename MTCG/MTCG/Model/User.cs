@@ -13,9 +13,7 @@
         }
 
         public int UserID { get; set; }
-        public int StackID { get; set; }
         public List<Card> Stack { get; set; }
-        public int DeckID { get; set; }
         public List<Card> Deck { get; set; }
         public int? Coins { get; set; }
         public int? Elo { get; set; }

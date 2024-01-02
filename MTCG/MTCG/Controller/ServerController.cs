@@ -1,7 +1,8 @@
 ﻿using Microsoft.IdentityModel.Tokens;
 using MTCG.Database;
 using MTCG.Model;
-using MTCG.Repos;
+using MTCG.Repositorys;
+using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
@@ -12,7 +13,6 @@ namespace MTCG.Controller
 {
     public static class ServerController
     {
-
         public static async Task ProcessRequest(HttpListenerContext context)
         {
             var request = context.Request;
@@ -22,375 +22,53 @@ namespace MTCG.Controller
 
             string method = request.HttpMethod.ToUpper();
 
-            string authHeader = "";
-            string token = "";
-
             switch (request.Url.LocalPath.ToLower())
             {
                 case var path when path.StartsWith("/users", StringComparison.OrdinalIgnoreCase):
-                    if (method == "POST")
-                    {
-                        using (var reader = new StreamReader(request.InputStream, request.ContentEncoding))
-                        {
-                            string requestBody = await reader.ReadToEndAsync();
-
-                            User user = JsonConvert.DeserializeObject<User>(requestBody);
-                            if (UserRepository.GetUserByUsername(user.Username) == null)
-                            {
-                                UserRepository.CreateUser(user);
-                                clientResponse.responseString = "User registered successfully.";
-                            }
-                            else
-                            {
-                                clientResponse.responseString = "Username already taken.";
-                                clientResponse.response.StatusCode = (int)HttpStatusCode.Conflict;
-                            }
-                        }
-                    }
-                    else if (method == "GET")
-                    {
-                        var segments = request.Url.Segments;
-
-                        if (segments.Length >= 3)
-                        {
-                            string username = segments[2].Trim('/');
-                            User user = UserRepository.GetUserInfoByUsername(username);
-
-                            if (user != null)
-                            {
-                                var userInfo = new
-                                {
-                                    user.Username,
-                                    user.Password,
-                                    user.Bio,
-                                    user.Image
-                                };
-
-                                string userInfoJson = JsonConvert.SerializeObject(userInfo);
-                                clientResponse.responseString = userInfoJson;
-                                clientResponse.response.ContentType = "application/json";
-                            }
-                            else
-                            {
-                                clientResponse.responseString = "User not found.";
-                                clientResponse.response.StatusCode = (int)HttpStatusCode.NotFound;
-                            }
-                        }
-                        else
-                        {
-                            clientResponse.responseString = "Invalid endpoint. Please provide a valid username.";
-                            clientResponse.response.StatusCode = (int)HttpStatusCode.BadRequest;
-                        }
-                    }
-
-                    else if (method == "PUT")
-                    {
-                        authHeader = request.Headers["Authorization"];
-                        token = authHeader.Replace("Bearer ", string.Empty);
-
-                        clientResponse = IsValidToken(request, clientResponse, token);
-                        if (clientResponse.response.StatusCode == (int)HttpStatusCode.Unauthorized)
-                            break;
-
-                        string username = request.Url.Segments.Last();
-
-                        using (var reader = new StreamReader(request.InputStream, request.ContentEncoding))
-                        {
-                            string requestBody = await reader.ReadToEndAsync();
-                            dynamic userData = JsonConvert.DeserializeObject(requestBody);
-
-                            User user = UserRepository.GetUserByUsername(username);
-
-                            if (user != null)
-                            {
-                                if (userData.Username != null)
-                                {
-                                    user.Username = userData.Username;
-                                }
-
-                                if (userData.Password != null)
-                                {
-                                    user.Password = userData.Password;
-                                }
-
-                                if (userData.Bio != null)
-                                {
-                                    user.Bio = userData.Bio;
-                                }
-
-                                if (userData.Image != null)
-                                {
-                                    user.Image = userData.Image;
-                                }
-
-                                UserRepository.UpdateUser(user);
-                                var JWTtoken = GenerateToken(user.Username);
-                                clientResponse.responseString = "User updated successfully.";                           
-                                clientResponse.response.AddHeader("Authorization", $"Bearer {JWTtoken}");
-                            }
-                            else
-                            {
-                                clientResponse.responseString = "User not found.";
-                                clientResponse.response.StatusCode = (int)HttpStatusCode.NotFound;
-                            }
-                        }
-                    }
-
+                    await ProcessUserRequest(request, method, clientResponse);
                     break;
 
                 case "/sessions":
-                    if (method == "POST")
-                    {
-                        using (var reader = new StreamReader(request.InputStream, request.ContentEncoding))
-                        {
-                            string requestBody = await reader.ReadToEndAsync();
-                            User user = JsonConvert.DeserializeObject<User>(requestBody);
-
-                            bool isValidUser = ValidateUserCredentials(user.Username, user.Password);
-
-                            if (UserRepository.GetUserByUsername(user.Username) != null && isValidUser)
-                            {
-                                var JWTtoken = GenerateToken(user.Username);
-                                clientResponse.response.AddHeader("Authorization", $"Bearer {JWTtoken}");
-                                clientResponse.responseString = "User logged in successfully.";
-                            }
-                            else
-                            {
-                                clientResponse.responseString = "Invalid username or password for login.";
-                                clientResponse.response.StatusCode = (int)HttpStatusCode.Unauthorized;
-                            }
-                        }
-                    }
+                    await ProcessSessionRequest(request, method, clientResponse);
                     break;
 
-
                 case "/packages":
-                    if (method == "POST")
-                    {
-                        authHeader = request.Headers["Authorization"];
-                        token = authHeader.Replace("Bearer ", string.Empty);
-
-                        clientResponse = IsValidToken(request, clientResponse, token);
-                        if (clientResponse.response.StatusCode == (int)HttpStatusCode.Unauthorized)
-                            break;
-
-                        using (var reader = new StreamReader(request.InputStream, request.ContentEncoding))
-                        {
-                            string requestBody = await reader.ReadToEndAsync();
-                            Package package = JsonConvert.DeserializeObject<Package>(requestBody);
-                            UserRepository.CreatePackages(package);
-                        }
-
-                        clientResponse.responseString = "Package created successfully.";
-                    }
+                    await ProcessPackageRequest(request, method, clientResponse);
                     break;
 
                 case "/transactions/packages":
-                    if(method == "POST")
-                    {
-                        authHeader = request.Headers["Authorization"];
-                        token = authHeader.Replace("Bearer ", string.Empty);
-
-                        clientResponse = IsValidToken(request, clientResponse, token);
-                        if (clientResponse.response.StatusCode == (int)HttpStatusCode.Unauthorized)
-                            break;
-
-                        string uname = GetUserNameFromToken(token);
-                        if (UserRepository.PurchasePackage(uname))
-                        {
-                            clientResponse.responseString = "User successfully purchased Package";
-                        }
-                        else
-                        {
-                            clientResponse.responseString = "Not enought Coins";
-                            clientResponse.response.StatusCode = (int)HttpStatusCode.PaymentRequired; 
-                        }
-                    }
+                    await ProcessTransactionRequest(request, method, clientResponse);
                     break;
 
-
                 case "/cards":
-                    if (method == "GET")
-                    {
-                        
-                        authHeader = request.Headers["Authorization"];
-
-                        if (authHeader == null)
-                        {
-                            clientResponse.responseString = "No authentication Header";
-                            clientResponse.response.StatusCode = (int)HttpStatusCode.BadRequest;
-                            break;
-                        }
-                  
-                        token = authHeader.Replace("Bearer ", string.Empty);
-
-                        clientResponse = IsValidToken(request, clientResponse, token);
-                        if (clientResponse.response.StatusCode == (int)HttpStatusCode.Unauthorized)
-                            break;
-
-                        List<Card> stack = UserRepository.GetUserStack(GetUserNameFromToken(token));
-                        string stackJson = JsonConvert.SerializeObject(stack);
-
-                        clientResponse.responseString = stackJson;
-                        clientResponse.response.ContentType = "application/json";
-                    }
+                    await ProcessCardsRequest(request, method, clientResponse);
                     break;
 
                 case "/deck":
-                    authHeader = request.Headers["Authorization"];
-                    token = authHeader.Replace("Bearer ", string.Empty);
-
-                    clientResponse = IsValidToken(request, clientResponse, token);
-                    if (clientResponse.response.StatusCode == (int)HttpStatusCode.Unauthorized)
-                        break;
-
-                    if (method == "GET")
-                    {
-                        string queryString = request.Url.Query;
-                        var queryParameters = System.Web.HttpUtility.ParseQueryString(queryString);
-
-                        string format = queryParameters["format"];
-
-                        List<Card> deck = UserRepository.GetUserDeck(GetUserNameFromToken(token));
-
-                        if (format == "plain")
-                        {
-                            string plainTextRepresentation = GeneratePlainTextRepresentation(deck);
-                            clientResponse.responseString = plainTextRepresentation;
-                            clientResponse.response.ContentType = "text/plain";
-                        }
-                        else
-                        {
-                            string deckJson = JsonConvert.SerializeObject(deck);
-                            clientResponse.responseString = deckJson;
-                            clientResponse.response.ContentType = "application/json";
-                        }
-                    }
-                    else if (method == "PUT")
-                    {
-                        using (var reader = new StreamReader(request.InputStream, request.ContentEncoding))
-                        {
-                            string requestBody = reader.ReadToEnd();
-                            List<int> cardIds = JsonConvert.DeserializeObject<List<int>>(requestBody);
-
-                            if (cardIds.Count == 4)
-                            {
-                                string username = GetUserNameFromToken(token);
-                                User user = UserRepository.GetUserByUsername(username);
-
-                                if (user != null && UserRepository.AreCardsInUserStack(user.UserID, cardIds))
-                                {
-                                    UserRepository.ClearUserDeck(user.UserID);
-                                    UserRepository.AddCardToUserDeck(user.UserID, cardIds);
-                                    clientResponse.responseString = "Deck configured successfully.";
-                                }
-                                else
-                                {
-                                    clientResponse.responseString = "Invalid card IDs. Only use Card which are in your stack and are currently not in Trading.";
-                                    clientResponse.response.StatusCode = (int)HttpStatusCode.BadRequest;
-                                }
-                            }
-                            else
-                            {
-                                clientResponse.responseString = "Invalid number of cards. Please provide exactly 4 cards.";
-                                clientResponse.response.StatusCode = (int)HttpStatusCode.BadRequest;
-                            }
-                        }
-                    }
+                    await ProcessDeckRequest(request, method, clientResponse);
                     break;
-
 
                 case "/stats":
-                    if (method == "GET")
-                    {
-                        authHeader = request.Headers["Authorization"];
-                        token = authHeader.Replace("Bearer ", string.Empty);
-
-                        clientResponse = IsValidToken(request, clientResponse, token);
-                        if (clientResponse.response.StatusCode == (int)HttpStatusCode.Unauthorized)
-                            break;
-
-                        string username = GetUserNameFromToken(token);
-                        User user = UserRepository.GetUserByUsername(username);
-
-                        if (user != null)
-                        {
-                            int totalGames = UserRepository.GetTotalGames(username);
-                            int gamesWon = UserRepository.GetGamesWon(username);
-                            int gamesLost = UserRepository.GetGamesLost(username);
-                            int spentCoins = UserRepository.GetTotalSpentCoins(username);
-
-                            double winPercentage = totalGames > 0 ? ((double)gamesWon / totalGames) * 100 : 0;
-                            var responseObj = new
-                            {                             
-                                user.Elo,
-                                user.Coins,
-                                TotalGames = totalGames,
-                                GamesWon = gamesWon,
-                                GamesLost = gamesLost,
-                                WinPercentage = winPercentage,
-                                SpentCoins = spentCoins
-                            };
-                            string jsonResponse = JsonConvert.SerializeObject(responseObj);
-                            clientResponse.responseString = jsonResponse;
-                            clientResponse.response.ContentType = "application/json";
-                        }
-                    }
+                    await ProcessStatsRequest(request, method, clientResponse);
                     break;
-
 
                 case "/scoreboard":
-                    if (method == "GET")
-                    {
-                        authHeader = request.Headers["Authorization"];
-                        token = authHeader.Replace("Bearer ", string.Empty);
-
-                        clientResponse = IsValidToken(request, clientResponse, token);
-                        if (clientResponse.response.StatusCode == (int)HttpStatusCode.Unauthorized)
-                            break;
-
-                        List<UserScoreboardEntry> scoreboard = UserRepository.GetScoreboard();
-
-                        string jsonResponse = JsonConvert.SerializeObject(scoreboard);
-                        clientResponse.responseString = jsonResponse;
-                        clientResponse.response.ContentType = "application/json";
-                    }
-                    break;
-
-
-                case "/tradings":
-                    if (method == "POST")
-                    {
-                        authHeader = request.Headers["Authorization"];
-                        token = authHeader.Replace("Bearer ", string.Empty);
-
-                        clientResponse = IsValidToken(request, clientResponse, token);
-                        if (clientResponse.response.StatusCode == (int)HttpStatusCode.Unauthorized)
-                            break;
-
-                        string username = GetUserNameFromToken(token);
-                    }
+                    await ProcessScoreboardRequest(request, method, clientResponse);
                     break;
 
                 case "/battles":
-                    if (method == "POST")
-                    {
-                        authHeader = request.Headers["Authorization"];
-                        token = authHeader.Replace("Bearer ", string.Empty);
-
-                        clientResponse = IsValidToken(request, clientResponse, token);
-                        if (clientResponse.response.StatusCode == (int)HttpStatusCode.Unauthorized)
-                            break;
-
-                        string username = GetUserNameFromToken(token);
-                    }
+                    await ProcessBattlesRequest(request, method, clientResponse);
                     break;
+
+                case "/tradings":
+                    await ProcessTradingsRequest(request, method, clientResponse);
+                    break;             
+
                 default:
                     clientResponse.responseString = "Invalid endpoint.";
                     clientResponse.response.StatusCode = (int)HttpStatusCode.NotFound;
                     break;
             }
-
             await Console.Out.WriteLineAsync($"Send to Client: {clientResponse.responseString}");
             byte[] buffer = Encoding.UTF8.GetBytes(clientResponse.responseString);
             clientResponse.response.ContentLength64 = buffer.Length;
@@ -404,7 +82,370 @@ namespace MTCG.Controller
             clientResponse.response.Close();
         }
 
-        public static bool ValidateUserCredentials(string username, string password)
+        private static async Task ProcessUserRequest(HttpListenerRequest request, string method, ClientResponse clientResponse)
+        {
+            if (method == "POST")
+            {
+                using (var reader = new StreamReader(request.InputStream, request.ContentEncoding))
+                {
+                    string requestBody = await reader.ReadToEndAsync();
+
+                    User user = JsonConvert.DeserializeObject<User>(requestBody);
+                    if (UserRepository.GetUserByUsername(user.Username) == null)
+                    {
+                        UserRepository.CreateUser(user);
+                        clientResponse.responseString = "User registered successfully.";
+                    }
+                    else
+                    {
+                        clientResponse.responseString = "Username already taken.";
+                        clientResponse.response.StatusCode = (int)HttpStatusCode.Conflict;
+                    }
+                }
+            }
+            else if (method == "GET")
+            {
+                var segments = request.Url.Segments;
+
+                if (segments.Length >= 3)
+                {
+                    string username = segments[2].Trim('/');
+                    User user = UserRepository.GetUserInfoByUsername(username);
+
+                    if (user != null)
+                    {
+                        var userInfo = new
+                        {
+                            user.Username,
+                            user.Password,
+                            user.Bio,
+                            user.Image
+                        };
+
+                        string userInfoJson = JsonConvert.SerializeObject(userInfo);
+                        clientResponse.responseString = userInfoJson;
+                        clientResponse.response.ContentType = "application/json";
+                    }
+                    else
+                    {
+                        clientResponse.responseString = "User not found.";
+                        clientResponse.response.StatusCode = (int)HttpStatusCode.NotFound;
+                    }
+                }
+                else
+                {
+                    clientResponse.responseString = "Invalid endpoint. Please provide a valid username.";
+                    clientResponse.response.StatusCode = (int)HttpStatusCode.BadRequest;
+                }
+            }
+
+            else if (method == "PUT")
+            {
+                string authHeader = request.Headers["Authorization"];
+                string token = authHeader.Replace("Bearer ", string.Empty);
+
+                clientResponse = IsValidToken(request, clientResponse, token);
+                if (clientResponse.response.StatusCode == (int)HttpStatusCode.Unauthorized)
+                    return;
+
+                string username = request.Url.Segments.Last();
+
+                using (var reader = new StreamReader(request.InputStream, request.ContentEncoding))
+                {
+                    string requestBody = await reader.ReadToEndAsync();
+                    dynamic userData = JsonConvert.DeserializeObject(requestBody);
+
+                    User user = UserRepository.GetUserByUsername(username);
+
+                    if (user != null)
+                    {
+                        if (userData.Username != null)
+                        {
+                            user.Username = userData.Username;
+                        }
+
+                        if (userData.Password != null)
+                        {
+                            user.Password = userData.Password;
+                        }
+
+                        if (userData.Bio != null)
+                        {
+                            user.Bio = userData.Bio;
+                        }
+
+                        if (userData.Image != null)
+                        {
+                            user.Image = userData.Image;
+                        }
+
+                        UserRepository.UpdateUser(user);
+                        var JWTtoken = GenerateToken(user.Username);
+                        clientResponse.responseString = "User updated successfully.";
+                        clientResponse.response.AddHeader("Authorization", $"Bearer {JWTtoken}");
+                    }
+                    else
+                    {
+                        clientResponse.responseString = "User not found.";
+                        clientResponse.response.StatusCode = (int)HttpStatusCode.NotFound;
+                    }
+                }
+            }
+        }
+
+        private static async Task ProcessSessionRequest(HttpListenerRequest request, string method, ClientResponse clientResponse)
+        {
+            if (method == "POST")
+            {
+                using (var reader = new StreamReader(request.InputStream, request.ContentEncoding))
+                {
+                    string requestBody = await reader.ReadToEndAsync();
+                    User user = JsonConvert.DeserializeObject<User>(requestBody);
+
+                    bool isValidUser = ValidateUserCredentials(user.Username, user.Password);
+
+                    if (UserRepository.GetUserByUsername(user.Username) != null && isValidUser)
+                    {
+                        var JWTtoken = GenerateToken(user.Username);
+                        clientResponse.response.AddHeader("Authorization", $"Bearer {JWTtoken}");
+                        clientResponse.responseString = "User logged in successfully.";
+                    }
+                    else
+                    {
+                        clientResponse.responseString = "Invalid username or password for login.";
+                        clientResponse.response.StatusCode = (int)HttpStatusCode.Unauthorized;
+                    }
+                }
+            }
+        }
+
+        private static async Task ProcessPackageRequest(HttpListenerRequest request, string method, ClientResponse clientResponse)
+        {
+            if (method == "POST")
+            {
+                string authHeader = request.Headers["Authorization"];
+                string token = authHeader.Replace("Bearer ", string.Empty);
+
+                clientResponse = IsValidToken(request, clientResponse, token);
+                if (clientResponse.response.StatusCode == (int)HttpStatusCode.Unauthorized)
+                    return;
+
+                using (var reader = new StreamReader(request.InputStream, request.ContentEncoding))
+                {
+                    string requestBody = await reader.ReadToEndAsync();
+                    Package package = JsonConvert.DeserializeObject<Package>(requestBody);
+                    PackageRepository.CreatePackages(package);
+                }
+
+                clientResponse.responseString = "Package created successfully.";
+            }
+        } 
+
+        private static async Task ProcessTransactionRequest(HttpListenerRequest request, string method, ClientResponse clientResponse)
+        {
+            if (method == "POST")
+            {
+                string authHeader = request.Headers["Authorization"];
+                string token = authHeader.Replace("Bearer ", string.Empty);
+
+                clientResponse = IsValidToken(request, clientResponse, token);
+                if (clientResponse.response.StatusCode == (int)HttpStatusCode.Unauthorized)
+                    return;
+
+                string uname = GetUserNameFromToken(token);
+                if (PackageRepository.PurchasePackage(uname))
+                {
+                    clientResponse.responseString = "User successfully purchased Package";
+                }
+                else
+                {
+                    clientResponse.responseString = "Not enought Coins";
+                    clientResponse.response.StatusCode = (int)HttpStatusCode.PaymentRequired;
+                }
+            }
+        }
+
+        private static async Task ProcessCardsRequest(HttpListenerRequest request, string method, ClientResponse clientResponse)
+        {
+            if (method == "GET")
+            {
+
+                string authHeader = request.Headers["Authorization"];
+
+                if (authHeader == null)
+                {
+                    clientResponse.responseString = "No authentication Header";
+                    clientResponse.response.StatusCode = (int)HttpStatusCode.BadRequest;
+                    return;
+                }
+
+                string token = authHeader.Replace("Bearer ", string.Empty);
+
+                clientResponse = IsValidToken(request, clientResponse, token);
+                if (clientResponse.response.StatusCode == (int)HttpStatusCode.Unauthorized)
+                    return;
+
+                List<Card> stack = StackRepository.GetUserStack(GetUserNameFromToken(token));
+                string stackJson = JsonConvert.SerializeObject(stack);
+
+                clientResponse.responseString = stackJson;
+                clientResponse.response.ContentType = "application/json";
+            }
+        }
+
+        private static async Task ProcessDeckRequest(HttpListenerRequest request, string method, ClientResponse clientResponse)
+        {
+            string authHeader = request.Headers["Authorization"];
+            string token = authHeader.Replace("Bearer ", string.Empty);
+
+            clientResponse = IsValidToken(request, clientResponse, token);
+            if (clientResponse.response.StatusCode == (int)HttpStatusCode.Unauthorized)
+                return;
+
+            if (method == "GET")
+            {
+                string queryString = request.Url.Query;
+                var queryParameters = System.Web.HttpUtility.ParseQueryString(queryString);
+
+                string format = queryParameters["format"];
+
+                List<Card> deck = DeckRepository.GetUserDeck(GetUserNameFromToken(token));
+
+                if (format == "plain")
+                {
+                    string plainTextRepresentation = GeneratePlainTextRepresentation(deck);
+                    clientResponse.responseString = plainTextRepresentation;
+                    clientResponse.response.ContentType = "text/plain";
+                }
+                else
+                {
+                    string deckJson = JsonConvert.SerializeObject(deck);
+                    clientResponse.responseString = deckJson;
+                    clientResponse.response.ContentType = "application/json";
+                }
+            }
+            else if (method == "PUT")
+            {
+                using (var reader = new StreamReader(request.InputStream, request.ContentEncoding))
+                {
+                    string requestBody = reader.ReadToEnd();
+                    List<int> cardIds = JsonConvert.DeserializeObject<List<int>>(requestBody);
+
+                    if (cardIds.Count == 4)
+                    {
+                        string username = GetUserNameFromToken(token);
+                        User user = UserRepository.GetUserByUsername(username);
+
+                        if (user != null && StackRepository.AreCardsInUserStack(user.UserID, cardIds))
+                        {
+                            DeckRepository.ClearUserDeck(user.UserID);
+                            DeckRepository.AddCardToUserDeck(user.UserID, cardIds);
+                            clientResponse.responseString = "Deck configured successfully.";
+                        }
+                        else
+                        {
+                            clientResponse.responseString = "Invalid card IDs. Only use Card which are in your stack and are currently not in Trading.";
+                            clientResponse.response.StatusCode = (int)HttpStatusCode.BadRequest;
+                        }
+                    }
+                    else
+                    {
+                        clientResponse.responseString = "Invalid number of cards. Please provide exactly 4 cards.";
+                        clientResponse.response.StatusCode = (int)HttpStatusCode.BadRequest;
+                    }
+                }
+            }
+        }
+
+        private static async Task ProcessStatsRequest(HttpListenerRequest request, string method, ClientResponse clientResponse)
+        {
+            if (method == "GET")
+            {
+                string authHeader = request.Headers["Authorization"];
+                string token = authHeader.Replace("Bearer ", string.Empty);
+
+                clientResponse = IsValidToken(request, clientResponse, token);
+                if (clientResponse.response.StatusCode == (int)HttpStatusCode.Unauthorized)
+                    return;
+
+                string username = GetUserNameFromToken(token);
+                User user = UserRepository.GetUserByUsername(username);
+
+                if (user != null)
+                {
+                    int totalGames = StatsRepository.GetTotalGames(username);
+                    int gamesWon = StatsRepository.GetGamesWon(username);
+                    int gamesLost = StatsRepository.GetGamesLost(username);
+                    int spentCoins = StatsRepository.GetTotalSpentCoins(username);
+
+                    double winPercentage = totalGames > 0 ? ((double)gamesWon / totalGames) * 100 : 0;
+                    var responseObj = new
+                    {
+                        user.Elo,
+                        user.Coins,
+                        TotalGames = totalGames,
+                        GamesWon = gamesWon,
+                        GamesLost = gamesLost,
+                        WinPercentage = winPercentage,
+                        SpentCoins = spentCoins
+                    };
+                    string jsonResponse = JsonConvert.SerializeObject(responseObj);
+                    clientResponse.responseString = jsonResponse;
+                    clientResponse.response.ContentType = "application/json";
+                }
+            }
+        }
+
+
+        private static async Task ProcessScoreboardRequest(HttpListenerRequest request, string method, ClientResponse clientResponse)
+        {
+            if (method == "GET")
+            {
+                string authHeader = request.Headers["Authorization"];
+                string token = authHeader.Replace("Bearer ", string.Empty);
+
+                clientResponse = IsValidToken(request, clientResponse, token);
+                if (clientResponse.response.StatusCode == (int)HttpStatusCode.Unauthorized)
+                    return;
+
+                List<UserScoreboardEntry> scoreboard = StatsRepository.GetScoreboard();
+
+                string jsonResponse = JsonConvert.SerializeObject(scoreboard);
+                clientResponse.responseString = jsonResponse;
+                clientResponse.response.ContentType = "application/json";
+            }
+        }
+        public static async Task ProcessBattlesRequest(HttpListenerRequest request, string method, ClientResponse clientResponse)
+        {
+            if (method == "POST")
+            {
+                string authHeader = request.Headers["Authorization"];
+                string token = authHeader.Replace("Bearer ", string.Empty);
+
+                clientResponse = IsValidToken(request, clientResponse, token);
+                if (clientResponse.response.StatusCode == (int)HttpStatusCode.Unauthorized)
+                    return;
+
+                string username = GetUserNameFromToken(token);
+            }
+        }
+        private static async Task ProcessTradingsRequest(HttpListenerRequest request, string method, ClientResponse clientResponse)
+        {
+            if (method == "POST")
+            {
+                string authHeader = request.Headers["Authorization"];
+                string token = authHeader.Replace("Bearer ", string.Empty);
+
+                clientResponse = IsValidToken(request, clientResponse, token);
+                if (clientResponse.response.StatusCode == (int)HttpStatusCode.Unauthorized)
+                    return;
+
+                string username = GetUserNameFromToken(token);
+            }
+        }
+        
+
+        private static bool ValidateUserCredentials(string username, string password)
         {
             User user = UserRepository.GetUserByUsername(username);
             if (user != null && user.Username == username && password == user.Password)

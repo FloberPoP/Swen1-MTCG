@@ -8,8 +8,13 @@ namespace MTCG.Database
         private string connectionString;
         public NpgsqlConnection Connection { get; }
 
-        public DataHandler(string host, string port, string database, string username, string password)
+        public DataHandler()
         {
+            string host = "localhost";
+            string port = "5432";
+            string database = "mtcgdb";
+            string username = "postgres";
+            string password = "debian123";
             connectionString = $"Host={host};Port={port};Database={database};Username={username};Password={password}";
             Connection = new NpgsqlConnection(connectionString);
         }

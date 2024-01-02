@@ -4,15 +4,15 @@ namespace MTCG.Database
 {
     internal static class Seed
     {
-        private static readonly DataHandler dataHandler = new("localhost", "5432", "mtcgdb", "postgres", "debian123");
+        private static readonly DataHandler? dataHandler = new DataHandler();
 
         public static void Seeding()
         {
             ClearDatabase();
             //ClearPurchases();
             CreateTables();
-            InsertUser();
-            //InsertCardData();
+            InsertCardData();
+            InsertUser();     
         }
         public static void CreateTables()
         {
@@ -25,8 +25,6 @@ namespace MTCG.Database
                 "Password text, " +
                 "Bio text,"+
                 "Image text,"+
-                "StackID int, " +
-                "DeckID int, " +
                 "Coins int, " +
                 "Elo int)";
             ExecuteNonQuery(createUsers);
@@ -39,11 +37,6 @@ namespace MTCG.Database
             string createDecks = "CREATE TABLE IF NOT EXISTS Decks " +
                 "(DecksID serial PRIMARY KEY, UserID int REFERENCES Users(UsersID), CardID int REFERENCES Cards(CardsID))";
             ExecuteNonQuery(createDecks);
-
-            string alterUsers = "ALTER TABLE Users " +
-                "ADD CONSTRAINT FK_Users_Stacks FOREIGN KEY (StackID) REFERENCES Stacks(StacksID) ON DELETE SET NULL, " +
-                "ADD CONSTRAINT FK_Users_Decks FOREIGN KEY (DeckID) REFERENCES Decks(DecksID) ON DELETE SET NULL";
-            ExecuteNonQuery(alterUsers);
 
             string createBattleLogs = "CREATE TABLE IF NOT EXISTS BattleLogs " +
                 "(BattleID serial PRIMARY KEY, " +
@@ -85,8 +78,6 @@ namespace MTCG.Database
                 "('AnotherNormalSpell', 18, 'NORMAL', 'SPELL')";
 
             ExecuteNonQuery(insertDataQuery);
-
-            ExecuteNonQuery("INSERT INTO Users (Username, StackID, DeckID, Coins, Elo, BattleCount, Password) VALUES ('SeedUser', null, null, 20, 100, 0, 'debian123')");
         }
 
 
@@ -101,8 +92,25 @@ namespace MTCG.Database
         }
         private static void InsertUser()
         {
-            ExecuteNonQuery("INSERT INTO Users (Username, StackID, DeckID, Coins, Elo, Password) VALUES ('kienboec', null, null, 20, 100, 'daniel')");
+            ExecuteNonQuery("INSERT INTO Users (Username, Coins, Elo, Password) VALUES ('kienboec', 20, 100, 'daniel')");
+            ExecuteNonQuery("INSERT INTO Users (Username, Coins, Elo, Password) VALUES ('altenhof', 20, 100, 'markus')");
+
+            // Get the UserIDs for the inserted users
+            int kienboecUserID = 1;
+            int altenhofUserID = 2;
+
+            // Insert decks for each user with 4 cards each
+            ExecuteNonQuery($"INSERT INTO Decks (UserID, CardID) VALUES ({kienboecUserID}, (SELECT CardsID FROM Cards WHERE Name = 'WaterGoblin')), " +
+                                                                           $"({kienboecUserID}, (SELECT CardsID FROM Cards WHERE Name = 'WaterSpell')), " +
+                                                                           $"({kienboecUserID}, (SELECT CardsID FROM Cards WHERE Name = 'AnotherWaterSpell')), " +
+                                                                           $"({kienboecUserID}, (SELECT CardsID FROM Cards WHERE Name = 'WaterSerpent'))");
+
+            ExecuteNonQuery($"INSERT INTO Decks (UserID, CardID) VALUES ({altenhofUserID}, (SELECT CardsID FROM Cards WHERE Name = 'Dragon')), " +
+                                                                           $"({altenhofUserID}, (SELECT CardsID FROM Cards WHERE Name = 'FireSpell')), " +
+                                                                           $"({altenhofUserID}, (SELECT CardsID FROM Cards WHERE Name = 'AnotherFireSpell')), " +
+                                                                           $"({altenhofUserID}, (SELECT CardsID FROM Cards WHERE Name = 'FirePhoenix'))");
         }
+
 
 
         private static void ExecuteNonQuery(string query)

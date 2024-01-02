@@ -1,21 +1,18 @@
 ﻿using System.Text;
 using MTCG.Model;
+using MTCG.Repositorys;
+using Npgsql.Replication.PgOutput.Messages;
 
 namespace MTCG.Battling
 {
     internal class Battle
     {
-        private StringBuilder rounds;
         private User winner;
         private User looser;
 
-        public Battle()
-        {
-            rounds = new StringBuilder();
-        }
-
         public BattleLog StartBattle(User playerA, User playerB)
         {
+            BattleLog log = new BattleLog();
             List<Card> deckA = playerA.Deck;
             List<Card> deckB = playerB.Deck;
 
@@ -35,17 +32,17 @@ namespace MTCG.Battling
                 {
                     deckB.Remove(cardB);
                     deckA.Add(cardB);
-                    rounds.AppendLine($"{playerB.Username}: {cardB.Name} ({damageB} Damage) defeated {playerA.Username}: {cardA.Name} ({damageA} Damage)");
+                    log.AddMessage($"{playerB.Username}: {cardB.Name} ({damageB} Damage) defeated {playerA.Username}: {cardA.Name} ({damageA} Damage)");
                 }
                 else if (damageB > damageA)
                 {
                     deckA.Remove(cardA);
                     deckB.Add(cardA);
-                    rounds.AppendLine($"{playerA.Username}: {cardA.Name} ({damageA} Damage) defeated {playerB.Username}: {cardB.Name} ({damageB} Damage)");
+                    log.AddMessage($"{playerA.Username}: {cardA.Name} ({damageA} Damage) defeated {playerB.Username}: {cardB.Name} ({damageB} Damage)");
                 }
                 else
                 {
-                    rounds.AppendLine($"Round {round} is a draw");
+                    log.AddMessage($"Round {round} is a draw");
                 }
 
                 if (deckA.Count == 0)
@@ -63,14 +60,19 @@ namespace MTCG.Battling
             }
 
             if (winner == null && looser == null)
-            {
-                rounds.AppendLine("The battle is a draw (exceeded 100 rounds).");
+            {             
+                log.Draw = true;
+                log.LooserID = playerA.UserID;
+                log.WinnerID = playerB.UserID;
             }
-
-            
-            // Update player stats (BattleCount and ELO calculation) => in DB over username
-
-            return new BattleLog(rounds, looser.Username, winner.Username);
+            else
+            {
+                log.Draw = false;
+                log.LooserID = looser.UserID;
+                log.WinnerID = winner.UserID;
+                UpdateUserElo(winner, looser);
+            }   
+            return log;
         }
 
         private Card DrawCard(List<Card> cards) 
@@ -81,6 +83,23 @@ namespace MTCG.Battling
             Card drawnCard = cards[randomIndex];
 
             return drawnCard;
+        }
+
+        public static void UpdateUserElo(User winner, User looser)
+        {
+            int kFactor = 10;
+
+            double expectedWinProbabilityA = 1 / (1 + Math.Pow(10, (looser.Elo - winner.Elo) / 400.0));
+            double expectedWinProbabilityB = 1 / (1 + Math.Pow(10, (winner.Elo - looser.Elo) / 400.0));
+
+            int newEloA = winner.Elo + (int)(kFactor * (1 - expectedWinProbabilityA));
+            int newEloB = looser.Elo + (int)(kFactor * (0 - expectedWinProbabilityB));
+
+            winner.Elo = newEloA;
+            looser.Elo = newEloB;
+
+            UserRepository.UpdateUser(winner);
+            UserRepository.UpdateUser(looser);
         }
     }
 }

@@ -1,6 +1,8 @@
-﻿using MTCG.Database;
+﻿using Microsoft.Extensions.Logging;
+using MTCG.Database;
 using MTCG.Model;
 using Npgsql;
+using System.Reflection;
 
 namespace MTCG.Repositorys
 {
@@ -32,13 +34,15 @@ namespace MTCG.Repositorys
                 new NpgsqlParameter("@coins", user.Coins),
                 new NpgsqlParameter("@elo", user.Elo),
                 new NpgsqlParameter("@password", user.Password),
-                new NpgsqlParameter("@bio", user.Bio),
-                new NpgsqlParameter("@image", user.Image),
-                new NpgsqlParameter("@username", user.Username)
+                new NpgsqlParameter("@username", user.Username),
+                new NpgsqlParameter("@bio", (object)user.Bio ?? DBNull.Value),
+                new NpgsqlParameter("@image", (object)user.Image ?? DBNull.Value)
             };
 
             dataHandler.ExecuteNonQuery(query, parameters);
         }
+
+
 
         public static User GetUserByUsername(string username)
         {
@@ -57,8 +61,8 @@ namespace MTCG.Repositorys
                     tmp.UserID = reader.GetInt32(reader.GetOrdinal("UsersID"));
                     tmp.Stack = StackRepository.GetUserStack(tmp.Username);
                     tmp.Deck = DeckRepository.GetUserDeck(tmp.Username);
-                    tmp.Coins = reader.IsDBNull(reader.GetOrdinal("Coins")) ? null : reader.GetInt32(reader.GetOrdinal("Coins"));                  
-                    tmp.Elo = reader.IsDBNull(reader.GetOrdinal("Elo")) ? null : reader.GetInt32(reader.GetOrdinal("Elo"));
+                    tmp.Coins = reader.GetInt32(reader.GetOrdinal("Coins"));
+                    tmp.Elo = reader.GetInt32(reader.GetOrdinal("Elo"));
                     return tmp;
                 }
             }
@@ -93,5 +97,37 @@ namespace MTCG.Repositorys
 
             return null;
         }
+
+        public static User GetRandomOpponent(User currentUser)
+        {
+            string query = "SELECT * FROM Users WHERE Username <> @username ORDER BY ABS(Elo - @elo) ASC LIMIT 1";
+
+            var parameters = new NpgsqlParameter[]
+            {
+                new NpgsqlParameter("@username", currentUser.Username),
+                new NpgsqlParameter("@elo", currentUser.Elo)
+            };
+
+            using (var reader = dataHandler.ExecuteSelectQuery(query, parameters))
+            {
+                if (reader != null && reader.Read())
+                {
+                    User opponent = new User(
+                        username: reader.GetString(reader.GetOrdinal("Username")),
+                        password: reader.GetString(reader.GetOrdinal("Password"))
+                    );
+
+                    opponent.UserID = reader.GetInt32(reader.GetOrdinal("UsersID"));
+                    opponent.Stack = StackRepository.GetUserStack(opponent.Username);
+                    opponent.Deck = DeckRepository.GetUserDeck(opponent.Username);
+                    opponent.Coins = reader.GetInt32(reader.GetOrdinal("Coins"));
+                    opponent.Elo = reader.GetInt32(reader.GetOrdinal("Elo"));
+
+                    return opponent;
+                }
+            }
+
+            return null;
+        }   
     }
 }

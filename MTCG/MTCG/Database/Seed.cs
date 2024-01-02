@@ -41,8 +41,10 @@ namespace MTCG.Database
             string createBattleLogs = "CREATE TABLE IF NOT EXISTS BattleLogs " +
                 "(BattleID serial PRIMARY KEY, " +
                 "Rounds text, " +
-                "Looser text, " +
-                "Winner text)";
+                "LooserID int REFERENCES Users(UsersID), " +
+                "WinnerID int REFERENCES Users(UsersID)," +
+                "Draw bool)";
+
             ExecuteNonQuery(createBattleLogs);
 
             string createPackages = "CREATE TABLE IF NOT EXISTS Packages " +
@@ -83,7 +85,7 @@ namespace MTCG.Database
 
         public static void ClearDatabase()
         {
-            ExecuteNonQuery("DROP TABLE IF EXISTS Stacks, Decks, Cards, Users, Packages, PackagesCards, Purchases CASCADE");
+            ExecuteNonQuery("DROP TABLE IF EXISTS Stacks, Decks, Cards, Users, Packages, PackagesCards, Purchases, BattleLogs CASCADE");
         }
 
         public static void ClearPurchases()

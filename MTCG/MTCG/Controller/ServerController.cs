@@ -8,6 +8,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Security.Claims;
 using System.Text;
+using MTCG.Battling;
 
 namespace MTCG.Controller
 {
@@ -373,9 +374,10 @@ namespace MTCG.Controller
 
                 if (user != null)
                 {
-                    int totalGames = StatsRepository.GetTotalGames(username);
-                    int gamesWon = StatsRepository.GetGamesWon(username);
-                    int gamesLost = StatsRepository.GetGamesLost(username);
+                    int totalGames = StatsRepository.GetTotalGames(user.UserID);
+                    int gamesWon = StatsRepository.GetGamesWon(user.UserID);
+                    int gamesLost = StatsRepository.GetGamesLost(user.UserID);
+                    int gamesDraw = StatsRepository.GetGamesDrawn(user.UserID);
                     int spentCoins = StatsRepository.GetTotalSpentCoins(username);
 
                     double winPercentage = totalGames > 0 ? ((double)gamesWon / totalGames) * 100 : 0;
@@ -386,6 +388,7 @@ namespace MTCG.Controller
                         TotalGames = totalGames,
                         GamesWon = gamesWon,
                         GamesLost = gamesLost,
+                        GamesDraw = gamesDraw,
                         WinPercentage = winPercentage,
                         SpentCoins = spentCoins
                     };
@@ -427,8 +430,17 @@ namespace MTCG.Controller
                     return;
 
                 string username = GetUserNameFromToken(token);
+                User user = UserRepository.GetUserByUsername(username);
+                User opponent = UserRepository.GetRandomOpponent(user);
+                Battle battle = new Battle();
+                BattleLog log = battle.StartBattle(user, opponent);
+                StatsRepository.InsertBattleLog(log);
+
+                clientResponse.responseString = JsonConvert.SerializeObject(log);
+                clientResponse.response.ContentType = "application/json";
             }
         }
+
         private static async Task ProcessTradingsRequest(HttpListenerRequest request, string method, ClientResponse clientResponse)
         {
             if (method == "POST")

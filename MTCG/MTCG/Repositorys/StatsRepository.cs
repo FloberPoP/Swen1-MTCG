@@ -1,4 +1,5 @@
-﻿using MTCG.Database;
+﻿using MTCG.Battling;
+using MTCG.Database;
 using MTCG.Model;
 using Npgsql;
 using System;
@@ -12,12 +13,12 @@ namespace MTCG.Repositorys
     internal static class StatsRepository
     {
         private static readonly DataHandler? dataHandler = new DataHandler();
-        public static int GetTotalGames(string username)
+        public static int GetTotalGames(int userID)
         {
             string query = "SELECT COUNT(*) as TotalGames " +
-                           "FROM BattleLogs WHERE Winner = @username OR Looser = @username";
+                           "FROM BattleLogs WHERE WinnerID = @userID OR LooserID = @userID";
 
-            var parameter = new NpgsqlParameter("@username", username);
+            var parameter = new NpgsqlParameter("@userID", userID);
 
             using (var reader = dataHandler.ExecuteSelectQuery(query, new NpgsqlParameter[] { parameter }))
             {
@@ -30,12 +31,12 @@ namespace MTCG.Repositorys
             return 0;
         }
 
-        public static int GetGamesWon(string username)
+        public static int GetGamesWon(int userID)
         {
             string query = "SELECT COUNT(*) as GamesWon " +
-                           "FROM BattleLogs WHERE Winner = @username";
+                           "FROM BattleLogs WHERE WinnerID = @userID AND Draw = false";
 
-            var parameter = new NpgsqlParameter("@username", username);
+            var parameter = new NpgsqlParameter("@userID", userID);
 
             using (var reader = dataHandler.ExecuteSelectQuery(query, new NpgsqlParameter[] { parameter }))
             {
@@ -48,12 +49,12 @@ namespace MTCG.Repositorys
             return 0;
         }
 
-        public static int GetGamesLost(string username)
+        public static int GetGamesLost(int userID)
         {
             string query = "SELECT COUNT(*) as GamesLost " +
-                           "FROM BattleLogs WHERE Looser = @username";
+                           "FROM BattleLogs WHERE LooserID = @userID AND Draw = false";
 
-            var parameter = new NpgsqlParameter("@username", username);
+            var parameter = new NpgsqlParameter("@userID", userID);
 
             using (var reader = dataHandler.ExecuteSelectQuery(query, new NpgsqlParameter[] { parameter }))
             {
@@ -66,6 +67,25 @@ namespace MTCG.Repositorys
             return 0;
         }
 
+        public static int GetGamesDrawn(int userID)
+        {
+            string query = "SELECT COUNT(*) as GamesDrawn " +
+                           "FROM BattleLogs WHERE Draw = true AND (WinnerID = @userID OR LooserID = @userID)";
+
+            var parameter = new NpgsqlParameter("@userID", userID);
+
+            using (var reader = dataHandler.ExecuteSelectQuery(query, new NpgsqlParameter[] { parameter }))
+            {
+                if (reader != null && reader.Read())
+                {
+                    return Convert.ToInt32(reader["GamesDrawn"]);
+                }
+            }
+
+            return 0;
+        }
+
+
         public static int GetTotalSpentCoins(string username)
         {
             string query = "SELECT SUM(p.Price) " +
@@ -76,9 +96,16 @@ namespace MTCG.Repositorys
 
             var parameter = new NpgsqlParameter("@username", username);
 
-            object result = dataHandler.ExecuteSelectQuery(query, new NpgsqlParameter[] { parameter });
-            return result != null ? Convert.ToInt32(result) : 0;
+            using (NpgsqlDataReader reader = (NpgsqlDataReader)dataHandler.ExecuteSelectQuery(query, new NpgsqlParameter[] { parameter }))
+            {
+                if (reader.Read())
+                {
+                    return reader.IsDBNull(0) ? 0 : Convert.ToInt32(reader[0]);
+                }
+            }
+            return 0;
         }
+
 
         public static List<UserScoreboardEntry> GetScoreboard()
         {
@@ -102,6 +129,22 @@ namespace MTCG.Repositorys
             }
 
             return scoreboard;
+        }
+
+        public static void InsertBattleLog(BattleLog log)
+        {
+            string query = "INSERT INTO BattleLogs (Rounds, LooserID, WinnerID, Draw) " +
+                           "VALUES (@rounds, @looserid, @winnerid, @draw)";
+
+            var parameters = new NpgsqlParameter[]
+            {
+                new NpgsqlParameter("@rounds", log.Rounds),
+                new NpgsqlParameter("@looserid", log.LooserID),
+                new NpgsqlParameter("@winnerid", log.WinnerID),
+                new NpgsqlParameter("@draw", log.Draw)
+            };
+
+            dataHandler.ExecuteNonQuery(query, parameters);
         }
     }
 }

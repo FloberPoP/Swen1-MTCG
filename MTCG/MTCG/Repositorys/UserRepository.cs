@@ -1,8 +1,6 @@
-﻿using Microsoft.Extensions.Logging;
-using MTCG.Database;
+﻿using MTCG.Database;
 using MTCG.Model;
 using Npgsql;
-using System.Reflection;
 
 namespace MTCG.Repositorys
 {
@@ -12,7 +10,7 @@ namespace MTCG.Repositorys
         public static void CreateUser(User user)
         {
             string query = "INSERT INTO Users (Username, Coins, Elo, Password) " +
-                           "VALUES (@username, @stackID, @deckID, @coins, @elo, @password)";
+                           "VALUES (@username, @coins, @elo, @password)";
 
             var parameters = new NpgsqlParameter[]
             {
@@ -57,7 +55,7 @@ namespace MTCG.Repositorys
                     User tmp = new User(
                         username: reader.GetString(reader.GetOrdinal("Username")),
                         password: reader.GetString(reader.GetOrdinal("Password"))
-                        );
+                    );
                     tmp.UserID = reader.GetInt32(reader.GetOrdinal("UsersID"));
                     tmp.Stack = StackRepository.GetUserStack(tmp.Username);
                     tmp.Deck = DeckRepository.GetUserDeck(tmp.Username);
@@ -100,7 +98,7 @@ namespace MTCG.Repositorys
 
         public static User GetRandomOpponent(User currentUser)
         {
-            string query = "SELECT * FROM Users WHERE Username <> @username ORDER BY ABS(Elo - @elo) ASC LIMIT 1";
+            string query = "SELECT * FROM Users WHERE Username <> @username AND UsersID IN (SELECT UserID FROM Decks) ORDER BY ABS(Elo - @elo) ASC LIMIT 1";
 
             var parameters = new NpgsqlParameter[]
             {

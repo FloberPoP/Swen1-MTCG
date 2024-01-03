@@ -1,12 +1,8 @@
-﻿using Microsoft.IdentityModel.Tokens;
-using MTCG.Database;
+﻿using MTCG.Database;
 using MTCG.Model;
 using MTCG.Repositorys;
-using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
-using System.IdentityModel.Tokens.Jwt;
 using System.Net;
-using System.Security.Claims;
 using System.Text;
 using MTCG.Battling;
 
@@ -61,7 +57,7 @@ namespace MTCG.Controller
                     await ProcessBattlesRequest(request, method, clientResponse);
                     break;
 
-                case "/tradings":
+                case var path when path.StartsWith("/tradings", StringComparison.OrdinalIgnoreCase):
                     await ProcessTradingsRequest(request, method, clientResponse);
                     break;             
 
@@ -106,15 +102,29 @@ namespace MTCG.Controller
             }
             else if (method == "GET")
             {
+                string authHeader = request.Headers["Authorization"];
+                string token = authHeader.Replace("Bearer ", string.Empty);
+
+                clientResponse = IsValidToken(request, clientResponse, token);
+                if (clientResponse.response.StatusCode == (int)HttpStatusCode.Unauthorized)
+                    return;
+
                 var segments = request.Url.Segments;
 
                 if (segments.Length >= 3)
                 {
                     string username = segments[2].Trim('/');
-                    User user = UserRepository.GetUserInfoByUsername(username);
-
+                    User user = UserRepository.GetUserInfoByUsername(username);                
                     if (user != null)
                     {
+                        
+                        if (user.Username != GetUserNameFromToken(token))
+                        {
+                            clientResponse.responseString = "Unauthorized User access.";
+                            clientResponse.response.StatusCode = (int)HttpStatusCode.Unauthorized;
+                            return;
+                        }
+
                         var userInfo = new
                         {
                             user.Username,
@@ -122,7 +132,6 @@ namespace MTCG.Controller
                             user.Bio,
                             user.Image
                         };
-
                         string userInfoJson = JsonConvert.SerializeObject(userInfo);
                         clientResponse.responseString = userInfoJson;
                         clientResponse.response.ContentType = "application/json";
@@ -160,6 +169,13 @@ namespace MTCG.Controller
 
                     if (user != null)
                     {
+                        if (user.Username != GetUserNameFromToken(token))
+                        {
+                            clientResponse.responseString = "Unauthorized User access.";
+                            clientResponse.response.StatusCode = (int)HttpStatusCode.Unauthorized;
+                            return;
+                        }
+
                         if (userData.Username != null)
                         {
                             user.Username = userData.Username;
@@ -399,7 +415,6 @@ namespace MTCG.Controller
             }
         }
 
-
         private static async Task ProcessScoreboardRequest(HttpListenerRequest request, string method, ClientResponse clientResponse)
         {
             if (method == "GET")
@@ -432,18 +447,26 @@ namespace MTCG.Controller
                 string username = GetUserNameFromToken(token);
                 User user = UserRepository.GetUserByUsername(username);
                 User opponent = UserRepository.GetRandomOpponent(user);
+                Console.WriteLine($"Opponent Count {opponent.Username}");
                 Battle battle = new Battle();
                 BattleLog log = battle.StartBattle(user, opponent);
                 StatsRepository.InsertBattleLog(log);
-
-                clientResponse.responseString = JsonConvert.SerializeObject(log);
+                var responseObj = new
+                {
+                    log.WinnerID,
+                    log.LooserID,
+                    log.Draw,
+                    log.Rounds
+                };
+                string jsonResponse = JsonConvert.SerializeObject(responseObj);
+                clientResponse.responseString = jsonResponse;
                 clientResponse.response.ContentType = "application/json";
             }
         }
 
         private static async Task ProcessTradingsRequest(HttpListenerRequest request, string method, ClientResponse clientResponse)
         {
-            if (method == "POST")
+            if (method == "GET") 
             {
                 string authHeader = request.Headers["Authorization"];
                 string token = authHeader.Replace("Bearer ", string.Empty);
@@ -452,7 +475,153 @@ namespace MTCG.Controller
                 if (clientResponse.response.StatusCode == (int)HttpStatusCode.Unauthorized)
                     return;
 
+                List<TradeRequirement> tradeRequirements = TradingRepository.GetAllTrades();
+                string TradsJson = JsonConvert.SerializeObject(tradeRequirements);
+                clientResponse.responseString = TradsJson;
+                clientResponse.response.ContentType = "application/json";
+            }
+            else if (method == "POST")
+            {
+
+                string authHeader = request.Headers["Authorization"];
+                string token = authHeader.Replace("Bearer ", string.Empty);
+
+                clientResponse = IsValidToken(request, clientResponse, token);
+                if (clientResponse.response.StatusCode == (int)HttpStatusCode.Unauthorized)
+                    return;
+
                 string username = GetUserNameFromToken(token);
+                User user = UserRepository.GetUserByUsername(username);
+
+                var segments = request.Url.Segments;
+                if (segments.Length < 3)
+                {
+                    // Normal POST request without trade ID in the URL
+                    using (var reader = new StreamReader(request.InputStream, request.ContentEncoding))
+                    {
+                        string requestBody = await reader.ReadToEndAsync();
+                        TradeRequirement t = JsonConvert.DeserializeObject<TradeRequirement>(requestBody);
+                        t.UsersID = user.UserID;
+                        if (DeckRepository.IsCardInUserDeck(t.UsersID, t.CardID))
+                        {
+                            clientResponse.responseString = "Card to Trade is Currently in Use in Deck";
+                            clientResponse.response.StatusCode = (int)HttpStatusCode.Conflict;
+                        }
+                        else if (CardRepository.IsCardTrading(t.CardID))
+                        {
+                            clientResponse.responseString = "Card to Trade is already Trading";
+                            clientResponse.response.StatusCode = (int)HttpStatusCode.Conflict;
+                        }
+                        else
+                        {
+                            TradingRepository.CreateTrade(t);
+                            CardRepository.UpdateCardTradingStatus(t.UsersID, t.CardID, true);
+                            clientResponse.responseString = "Trade created successfully.";
+                        }
+                    }
+                }
+                else
+                {
+                    // POST request with trade ID in the URL
+                    int tradeID;
+                    if (int.TryParse(segments[2].Trim('/'), out tradeID))
+                    {
+                        using (var reader = new StreamReader(request.InputStream, request.ContentEncoding))
+                        {
+                            string requestBody = await reader.ReadToEndAsync();
+                            int acceptingCardID;
+                            if (!int.TryParse(requestBody.Trim('"'), out acceptingCardID))
+                            {
+                                clientResponse.responseString = "Invalid card ID format.";
+                                clientResponse.response.StatusCode = (int)HttpStatusCode.BadRequest;
+                                return;
+                            }
+
+                            TradeRequirement tradeOffer = TradingRepository.GetTradebyTradID(tradeID);
+                            // Check if the trade exists
+                            if (tradeOffer == null)
+                            {
+                                clientResponse.responseString = "Trade not found.";
+                                clientResponse.response.StatusCode = (int)HttpStatusCode.NotFound;
+                            }
+                            // Check if the trader is not the same person as the trade acceptor
+                            else if (tradeOffer.UsersID == user.UserID)
+                            {
+                                clientResponse.responseString = "You cannot accept your own trade offer.";
+                                clientResponse.response.StatusCode = (int)HttpStatusCode.BadRequest;
+                            }
+                            // Check if user has this card
+                            
+                            else if (!StackRepository.AreCardsInUserStack(user.UserID, new List<int> { acceptingCardID }))
+                            {
+                                clientResponse.responseString = "You dont own the Card";
+                                clientResponse.response.StatusCode = (int)HttpStatusCode.BadRequest;
+                            }
+                            else if (DeckRepository.IsCardInUserDeck(user.UserID, acceptingCardID))
+                            {
+                                clientResponse.responseString = "Card to Trade is Currently in Use in Deck";
+                                clientResponse.response.StatusCode = (int)HttpStatusCode.Conflict;
+                            }
+                            else if (CardRepository.IsCardTrading(acceptingCardID))
+                            {
+                                clientResponse.responseString = "Card to Trade is already Trading";
+                                clientResponse.response.StatusCode = (int)HttpStatusCode.Conflict;
+                            }
+                            // Check if the card has all the requirements
+                            else if (!CardRepository.IsCardEligibleForTrade(acceptingCardID, tradeOffer.CardRegion, tradeOffer.CardType, tradeOffer.MinimumDamage))
+                            {
+                                clientResponse.responseString = "The provided card does not meet the trade requirements.";
+                                clientResponse.response.StatusCode = (int)HttpStatusCode.BadRequest;
+                            }
+                            else
+                            {
+                                // Process the trade acceptance
+                                TradingRepository.AcceptTrade(tradeID, acceptingCardID, user.UserID);
+                                clientResponse.responseString = "Trade accepted successfully.";
+                            }
+                        }
+                    }
+                    else
+                    {
+                        clientResponse.responseString = "Invalid trade ID format.";
+                        clientResponse.response.StatusCode = (int)HttpStatusCode.BadRequest;
+                    }
+                }
+            }
+            else if (method == "DELETE")
+            {
+                string authHeader = request.Headers["Authorization"];
+                string token = authHeader.Replace("Bearer ", string.Empty);
+
+                clientResponse = IsValidToken(request, clientResponse, token);
+                if (clientResponse.response.StatusCode == (int)HttpStatusCode.Unauthorized)
+                    return;
+
+                var segments = request.Url.Segments;
+
+                if (segments.Length >= 3)
+                {
+                    int tradesid = Convert.ToInt32(segments[2].Trim('/'));
+                    TradeRequirement t = TradingRepository.GetTradebyTradID(tradesid);
+
+                    if (t != null)
+                    {
+                        CardRepository.UpdateCardTradingStatus(t.UsersID, t.CardID, false);
+                        TradingRepository.DeleteTradeById(t.TradesID);                    
+                        clientResponse.responseString = $"Trade with ID: {tradesid} Deleted.";
+                        clientResponse.response.StatusCode = (int)HttpStatusCode.OK;
+                    }
+                    else
+                    {
+                        clientResponse.responseString = "Trade not found.";
+                        clientResponse.response.StatusCode = (int)HttpStatusCode.NotFound;
+                    }
+                }
+                else
+                {
+                    clientResponse.responseString = "Invalid endpoint. Please provide a valid TradeID.";
+                    clientResponse.response.StatusCode = (int)HttpStatusCode.BadRequest;
+                }
             }
         }
         
@@ -481,55 +650,22 @@ namespace MTCG.Controller
         }
         static string GenerateToken(string username)
         {
-            var claims = new[]
-            {
-                new Claim(ClaimTypes.Name, username),
-            };
-
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("04qYL5KCcxlUsM1zlbkQ77jg1HvvIBz14vUTgzJfDMU="));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            var token = new JwtSecurityToken(
-                issuer: "if22b009",
-                audience: "technikumwien",
-                claims: claims,
-                expires: DateTime.UtcNow.AddHours(2),
-                signingCredentials: creds
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            string token = $"{username}-mtcgToken";
+            return token;
         }
 
         private static ClientResponse IsValidToken(HttpListenerRequest request, ClientResponse cr, string token)
         {
-            if (request.Headers["Authorization"] == null)
+            if (string.IsNullOrEmpty(request.Headers["Authorization"]))
             {
                 cr.responseString = "Unauthorized: Missing Authorization header.";
                 cr.response.StatusCode = (int)HttpStatusCode.Unauthorized;
+                return cr;
             }
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("04qYL5KCcxlUsM1zlbkQ77jg1HvvIBz14vUTgzJfDMU="));
-            var tokenValidationParameters = new TokenValidationParameters
-            {
-                ValidIssuer = "if22b009",
-                ValidAudience = "technikumwien",
-                IssuerSigningKey = key
-            };
+            string headerToken = request.Headers["Authorization"].Replace("Bearer ", "");
 
-
-            bool ValidToken;
-            try
-            {
-                var handler = new JwtSecurityTokenHandler();
-                handler.ValidateToken(token, tokenValidationParameters, out SecurityToken validatedToken);
-                ValidToken = true;
-            }
-            catch (SecurityTokenMalformedException)
-            {
-                ValidToken = false;
-            }
-
-            if (!ValidToken)
+            if (headerToken != $"{GetUserNameFromToken(token)}-mtcgToken")
             {
                 cr.responseString = "Unauthorized: Invalid token.";
                 cr.response.StatusCode = (int)HttpStatusCode.Unauthorized;
@@ -540,12 +676,9 @@ namespace MTCG.Controller
 
         static string GetUserNameFromToken(string tokenString)
         {
-            var handler = new JwtSecurityTokenHandler();
-            var jsonToken = handler.ReadToken(tokenString) as JwtSecurityToken;
-
-            if (jsonToken != null)
+            if (tokenString.EndsWith("-mtcgToken"))
             {
-                return jsonToken?.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value;
+                return tokenString.Substring(0, tokenString.Length - "-mtcgToken".Length);
             }
             return null;
         }

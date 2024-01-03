@@ -54,5 +54,54 @@ namespace MTCG.Repositorys
 
             return cards;
         }
+
+        public static void UpdateCardTradingStatus(int userId, int cardId, bool tradingStatus)
+        {
+            string updateQuery = "UPDATE Stacks SET Trading = @tradingStatus WHERE UserID = @userId AND CardID = @cardId";
+
+            var parameters = new NpgsqlParameter[]
+            {
+                new NpgsqlParameter("@userId", userId),
+                new NpgsqlParameter("@cardId", cardId),
+                new NpgsqlParameter("@tradingStatus", tradingStatus)
+            };
+
+            dataHandler.ExecuteNonQuery(updateQuery, parameters);
+        }
+
+
+        public static bool IsCardTrading(int cardId)
+        {
+            string checkQuery = "SELECT Trading FROM Stacks WHERE CardID = @cardId";
+
+            var parameter = new NpgsqlParameter("@cardId", cardId);
+
+            using (var reader = dataHandler.ExecuteSelectQuery(checkQuery, new NpgsqlParameter[] { parameter }))
+            {
+                if (reader != null && reader.Read())
+                {
+                    return reader.GetBoolean(reader.GetOrdinal("Trading"));
+                }
+            }
+            return false;
+        }
+
+        public static bool IsCardEligibleForTrade(int acceptingCardID, ERegions tradeOfferCardRegion, EType tradeOfferCardType, int tradeOfferMinimumDamage)
+        {
+            string checkQuery = "SELECT * FROM Cards WHERE CardsID = @acceptingCardID AND Region = @cardRegion AND Type = @cardType AND Damage >= @minimumDamage";
+            var parameters = new NpgsqlParameter[]
+            {
+                new NpgsqlParameter("@acceptingCardID", acceptingCardID),
+                new NpgsqlParameter("@cardRegion", tradeOfferCardRegion.ToString()),
+                new NpgsqlParameter("@cardType", tradeOfferCardType.ToString()),
+                new NpgsqlParameter("@minimumDamage", tradeOfferMinimumDamage)
+            };
+
+            using (var reader = dataHandler.ExecuteSelectQuery(checkQuery, parameters))
+            {
+                return reader != null && reader.Read();
+            }
+        }
+
     }
 }

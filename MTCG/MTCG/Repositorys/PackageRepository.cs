@@ -14,10 +14,9 @@ namespace MTCG.Repositorys
             if (user != null)
             {
                 Package package = GetRandomPackage(user.UserID);
-                package.Cards = CardRepository.GetCardsByPackageId(package.PackageID);
-
                 if (package != null && user.Coins >= package.Price)
                 {
+                    package.Cards = CardRepository.GetCardsByPackageId(package.PackageID);
                     user.Coins -= package.Price;
                     UserRepository.UpdateUser(user);
                     AddPurchaseRecord(user.UserID, package.PackageID);

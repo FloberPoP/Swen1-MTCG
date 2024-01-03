@@ -76,29 +76,5 @@ namespace MTCG.Database
                 return -1;
             }
         }
-
-        public static EType ETypeConverter(string type)
-        {
-            if (Enum.TryParse<EType>(type, out var result))
-            {
-                return result;
-            }
-            else
-            {
-                throw new ArgumentException($"Invalid type: {type}");
-            }
-        }
-
-        public static ERegions ERegionsConverter(string region)
-        {
-            if (Enum.TryParse<ERegions>(region, out var result))
-            {
-                return result;
-            }
-            else
-            {
-                throw new ArgumentException($"Invalid region: {region}");
-            }
-        }
     }
 }

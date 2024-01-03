@@ -1,7 +1,5 @@
-﻿using System.Text;
-using MTCG.Model;
+﻿using MTCG.Model;
 using MTCG.Repositorys;
-using Npgsql.Replication.PgOutput.Messages;
 
 namespace MTCG.Battling
 {
@@ -19,6 +17,9 @@ namespace MTCG.Battling
             // Battle for up to 100 rounds
             for (int round = 1; round <= 100; round++)
             {
+                Console.WriteLine($"Rounds: {round}");
+                Console.WriteLine($"CoundA: {playerA.Deck.Count}");
+                Console.WriteLine($"CoundB: {playerB.Deck.Count}");
                 // Draw cards from the decks for the current round
                 Card cardA = DrawCard(deckA);
                 Card cardB = DrawCard(deckB);
@@ -79,7 +80,6 @@ namespace MTCG.Battling
         {
             Random random = new Random();
             int randomIndex = random.Next(cards.Count);
-
             Card drawnCard = cards[randomIndex];
 
             return drawnCard;

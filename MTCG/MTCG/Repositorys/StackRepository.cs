@@ -2,11 +2,6 @@
 using MTCG.Model;
 using Npgsql;
 using NpgsqlTypes;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MTCG.Repositorys
 {
@@ -24,6 +19,17 @@ namespace MTCG.Repositorys
             };
 
             dataHandler.ExecuteNonQuery(query, parameters);
+        }
+
+        public static void DeleteCardFromUserStack(int userID, int cardID)
+        {
+            string deleteCardFromStackQuery = "DELETE FROM Stacks WHERE UserID = @userID AND CardID = @cardID";
+            var deleteCardParameters = new NpgsqlParameter[]
+            {
+                new NpgsqlParameter("@userID", userID),
+                new NpgsqlParameter("@cardID", cardID)
+            };
+            dataHandler.ExecuteNonQuery(deleteCardFromStackQuery, deleteCardParameters);
         }
 
         public static List<Card> GetUserStack(string username)
@@ -71,9 +77,15 @@ namespace MTCG.Repositorys
                 }
             };
 
-            int count = Convert.ToInt32(dataHandler.ExecuteSelectQuery(query, parameters));
-
-            return count == cardIds.Count;
+            using (var reader = dataHandler.ExecuteSelectQuery(query, parameters))
+            {
+                if (reader.Read())
+                {
+                    int count = reader.GetInt32(0);
+                    return count == cardIds.Count;
+                }
+            }
+            return false;
         }
     }
 }

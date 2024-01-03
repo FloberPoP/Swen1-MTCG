@@ -27,13 +27,13 @@ namespace MTCG.Repositorys
             {
                 while (reader != null && reader.Read())
                 {
-                    Card card = new Card(
+                    Card card = new Card(                       
                         reader.GetString(reader.GetOrdinal("Name")),
                         reader.GetInt32(reader.GetOrdinal("Damage")),
                         Enum.Parse<ERegions>(reader.GetString(reader.GetOrdinal("Region"))),
                         Enum.Parse<EType>(reader.GetString(reader.GetOrdinal("Type")))
                     );
-
+                    card.CardsID = reader.GetInt32(reader.GetOrdinal("CardsID"));
                     userDeck.Add(card);
                 }
             }
@@ -63,5 +63,22 @@ namespace MTCG.Repositorys
                 dataHandler.ExecuteNonQuery(query, parameters);
             }
         }
+
+        public static bool IsCardInUserDeck(int userId, int cardId)
+        {
+            string query = "SELECT 1 FROM Decks WHERE UserID = @userId AND CardID = @cardId";
+
+            var parameters = new NpgsqlParameter[]
+            {
+                new NpgsqlParameter("@userId", userId),
+                new NpgsqlParameter("@cardId", cardId)
+            };
+
+            using (var reader = dataHandler.ExecuteSelectQuery(query, parameters))
+            {
+                return reader != null && reader.HasRows;
+            }
+        }
+
     }
 }

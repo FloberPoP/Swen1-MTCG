@@ -11,8 +11,8 @@ namespace MTCG.Database
             ClearDatabase();
             //ClearPurchases();
             CreateTables();
-            InsertCardData();
-            InsertUser();     
+            //InsertCardData();
+            //InsertUser();     
         }
         public static void CreateTables()
         {
@@ -58,6 +58,10 @@ namespace MTCG.Database
             string createPurchases = "CREATE TABLE IF NOT EXISTS Purchases " +
                 "(PurchasesID serial PRIMARY KEY, PackagesID int REFERENCES Packages(PackagesID), UsersID int REFERENCES Users(UsersID))";
             ExecuteNonQuery(createPurchases);
+
+            string createTrades = "CREATE TABLE IF NOT EXISTS Trades " +
+                "(TradesID serial PRIMARY KEY, UsersID int REFERENCES Users(UsersID), CardID int REFERENCES Cards(CardsID), CardRegion text, CardType text, MinimumDamage int)";
+            ExecuteNonQuery(createTrades);
         }
 
         public static void InsertCardData()
@@ -85,7 +89,7 @@ namespace MTCG.Database
 
         public static void ClearDatabase()
         {
-            ExecuteNonQuery("DROP TABLE IF EXISTS Stacks, Decks, Cards, Users, Packages, PackagesCards, Purchases, BattleLogs CASCADE");
+            ExecuteNonQuery("DROP TABLE IF EXISTS Stacks, Decks, Cards, Users, Packages, PackagesCards, Purchases, BattleLogs, Trades CASCADE");
         }
 
         public static void ClearPurchases()
@@ -170,6 +174,10 @@ namespace MTCG.Database
             // Print Purchases table
             string selectPurchases = "SELECT * FROM Purchases";
             PrintTable("Purchases", selectPurchases);
+
+            // Print Trades table
+            string selectTrades = "SELECT * FROM Trades";
+            PrintTable("Trades", selectTrades);
         }
 
         private static void PrintTable(string tableName, string selectQuery)

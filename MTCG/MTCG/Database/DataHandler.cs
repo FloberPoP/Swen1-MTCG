@@ -1,6 +1,4 @@
 ﻿using Npgsql;
-using MTCG.Model;
-
 namespace MTCG.Database
 {
     internal class DataHandler
@@ -51,7 +49,7 @@ namespace MTCG.Database
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Error: " + ex.Message);
+                Console.WriteLine($"Error: {ex.Message}");
                 return null;
             }
         }
@@ -72,7 +70,7 @@ namespace MTCG.Database
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Error: " + ex.Message);
+                Console.WriteLine($"Error: {ex.Message}");
                 return -1;
             }
         }

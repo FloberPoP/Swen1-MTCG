@@ -1,77 +1,82 @@
 ﻿using MTCG.Model;
 using MTCG.Repositorys;
+using System.Threading.Channels;
 
 namespace MTCG.Battling
 {
     internal class Battle
     {
-        private User winner;
-        private User looser;
+        private User? winner;
+        private User? loser;
+        private const int MaxRounds = 100;
+        private const int BuffThreshold = 3;
+        private const int BuffDamage = 10;
+        BattleLog log;
+
+        public Battle()
+        {
+            log = new BattleLog();
+        }
 
         public BattleLog StartBattle(User playerA, User playerB)
         {
-            BattleLog log = new BattleLog();
             List<Card> deckA = playerA.Deck;
             List<Card> deckB = playerB.Deck;
 
             // Battle for up to 100 rounds
-            for (int round = 1; round <= 100; round++)
-            {
-                Console.WriteLine($"Rounds: {round}");
-                Console.WriteLine($"CoundA: {playerA.Deck.Count}");
-                Console.WriteLine($"CoundB: {playerB.Deck.Count}");
+            for (int round = 1; round <= MaxRounds; round++)
+            {;
                 // Draw cards from the decks for the current round
                 Card cardA = DrawCard(deckA);
-                Card cardB = DrawCard(deckB);
-
-                // Calculate damage for the round
-                int damageA = cardA.CalculateDamage(cardB);
-                int damageB = cardB.CalculateDamage(cardA);
+                Card cardB = DrawCard(deckB);    
+                
+                int damageA = CalculateBuffDamage(playerA, playerB, cardA, cardB);               
+                int damageB = CalculateBuffDamage(playerB, playerA, cardB, cardA);
 
                 // Determine the winner of the round
                 if (damageA > damageB)
                 {
                     deckB.Remove(cardB);
                     deckA.Add(cardB);
-                    log.AddMessage($"{playerB.Username}: {cardB.Name} ({damageB} Damage) defeated {playerA.Username}: {cardA.Name} ({damageA} Damage)");
+                    log.AddMessage($"{playerA.Username}: {cardA.Name} ({damageA} Damage) defeated {playerB.Username}: {cardB.Name} ({damageB} Damage)");
                 }
                 else if (damageB > damageA)
                 {
                     deckA.Remove(cardA);
                     deckB.Add(cardA);
-                    log.AddMessage($"{playerA.Username}: {cardA.Name} ({damageA} Damage) defeated {playerB.Username}: {cardB.Name} ({damageB} Damage)");
+                    log.AddMessage($"{playerB.Username}: {cardB.Name} ({damageB} Damage) defeated {playerA.Username}: {cardA.Name} ({damageA} Damage)");                    
                 }
                 else
                 {
-                    log.AddMessage($"Round {round} is a draw");
+                    log.AddMessage($"Round {round} is a draw: {playerB.Username}: {cardB.Name} ({damageB} Damage) vs {playerA.Username}: {cardA.Name} ({damageA} Damage)");
                 }
-
+                
                 if (deckA.Count == 0)
                 {
                     winner = playerB;
-                    looser = playerA;
+                    loser = playerA;
                     break;
                 }
                 else if (deckB.Count == 0)
                 {
                     winner = playerA;
-                    looser = playerB;
+                    loser = playerB;
                     break;
                 }
             }
 
-            if (winner == null && looser == null)
+            if (winner == null && loser == null)
             {             
                 log.Draw = true;
-                log.LooserID = playerA.UserID;
+                log.LoserID = playerA.UserID;
                 log.WinnerID = playerB.UserID;
             }
             else
             {
                 log.Draw = false;
-                log.LooserID = looser.UserID;
+                log.LoserID = loser.UserID;
                 log.WinnerID = winner.UserID;
-                UpdateUserElo(winner, looser);
+                UpdateUserElo(winner, loser);
             }   
             return log;
         }
@@ -85,21 +90,57 @@ namespace MTCG.Battling
             return drawnCard;
         }
 
-        public static void UpdateUserElo(User winner, User looser)
+        private bool CheckForBuff(List<Card> deck, ERegions targetRegion)
+        {
+            int count = deck.Count(card => card.Region == targetRegion);
+            
+            return count >= BuffThreshold;
+        }
+
+        private int CalculateBuffDamage(User playerA, User playerB, Card cardA, Card cardB)
+        {
+            int damage = cardA.CalculateDamage(cardB);
+            
+            if (CheckForBuff(playerB.Deck, ERegions.NORMAL) && cardB.Region == ERegions.NORMAL)
+            {
+                if (cardA.CalculateDamage(cardB) < cardA.Damage)
+                {
+                    damage = cardA.CalculateDamage(cardB);
+                }
+                else
+                {
+                    damage = cardA.Damage;
+                }
+                log.AddMessage($"Buff activated for {playerB.Username}: Neutral Ground: Nullify opponent's elemental advantages");              
+            }
+            if (CheckForBuff(playerB.Deck, ERegions.WATER) && cardB.Region == ERegions.WATER)
+            {                           
+                damage -= BuffDamage;
+                log.AddMessage($"Buff activated for {playerB.Username}: Frostbite -> Inflict a debuff on the opponent, reducing their damage");
+            }
+            if(CheckForBuff(playerA.Deck, ERegions.FIRE) && cardA.Region == ERegions.FIRE)
+            {
+                damage += BuffDamage;
+                log.AddMessage($"Buff activated for {playerA.Username}: Inferno: Increase the damage dealt to the opponent");
+            }
+            return damage;            
+        }
+           
+        private void UpdateUserElo(User winner, User loser)
         {
             int kFactor = 10;
 
-            double expectedWinProbabilityA = 1 / (1 + Math.Pow(10, (looser.Elo - winner.Elo) / 400.0));
-            double expectedWinProbabilityB = 1 / (1 + Math.Pow(10, (winner.Elo - looser.Elo) / 400.0));
+            double expectedWinProbabilityA = 1 / (1 + Math.Pow(10, (loser.Elo - winner.Elo) / 400.0));
+            double expectedWinProbabilityB = 1 / (1 + Math.Pow(10, (winner.Elo - loser.Elo) / 400.0));
 
             int newEloA = winner.Elo + (int)(kFactor * (1 - expectedWinProbabilityA));
-            int newEloB = looser.Elo + (int)(kFactor * (0 - expectedWinProbabilityB));
+            int newEloB = loser.Elo + (int)(kFactor * (0 - expectedWinProbabilityB));
 
             winner.Elo = newEloA;
-            looser.Elo = newEloB;
+            loser.Elo = newEloB;
 
             UserRepository.UpdateUser(winner);
-            UserRepository.UpdateUser(looser);
+            UserRepository.UpdateUser(loser);
         }
     }
 }

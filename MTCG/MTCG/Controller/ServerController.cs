@@ -74,8 +74,6 @@ namespace MTCG.Controller
             {
                 await output.WriteAsync(buffer, 0, buffer.Length);
             }
-
-            Seed.PrintTableContents();
             clientResponse.response.Close();
         }
 
@@ -447,14 +445,14 @@ namespace MTCG.Controller
                 string username = GetUserNameFromToken(token);
                 User user = UserRepository.GetUserByUsername(username);
                 User opponent = UserRepository.GetRandomOpponent(user);
-                Console.WriteLine($"Opponent Count {opponent.Username}");
+                
                 Battle battle = new Battle();
                 BattleLog log = battle.StartBattle(user, opponent);
                 StatsRepository.InsertBattleLog(log);
                 var responseObj = new
                 {
                     log.WinnerID,
-                    log.LooserID,
+                    log.LoserID,
                     log.Draw,
                     log.Rounds
                 };

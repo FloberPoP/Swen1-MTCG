@@ -1,11 +1,6 @@
 ﻿using MTCG.Database;
 using MTCG.Model;
 using Npgsql;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MTCG.Repositorys
 {
@@ -14,10 +9,7 @@ namespace MTCG.Repositorys
         private static readonly DataHandler? dataHandler = new DataHandler();
         public static List<Card> GetUserDeck(string username)
         {
-            string query = "SELECT c.* FROM Cards c " +
-                           "JOIN Decks d ON c.CardsID = d.CardID " +
-                           "JOIN Users u ON d.UserID = u.UsersID " +
-                           "WHERE u.Username = @username";
+            string query = "SELECT c.* FROM Cards c JOIN Decks d ON c.CardsID = d.CardID JOIN Users u ON d.UserID = u.UsersID WHERE u.Username = @username";
 
             var parameter = new NpgsqlParameter("@username", username);
 

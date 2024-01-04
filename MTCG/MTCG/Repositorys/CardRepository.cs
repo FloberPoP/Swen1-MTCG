@@ -10,8 +10,7 @@ namespace MTCG.Repositorys
         public static void CreateCard(Card c)
         {
 
-            string query = "INSERT INTO Cards (CardsID, Name, Damage, Region, Type)" +
-                           "VALUES (@cardsid, @name, @damage, @region, @type)";
+            string query = "INSERT INTO Cards (CardsID, Name, Damage, Region, Type) VALUES (@cardsid, @name, @damage, @region, @type)";
 
             var parameters = new NpgsqlParameter[]
             {
@@ -27,9 +26,7 @@ namespace MTCG.Repositorys
 
         public static List<Card> GetCardsByPackageId(int packageId)
         {
-            string query = "SELECT c.* FROM Cards c " +
-                           "JOIN PackagesCards pc ON c.CardsID = pc.CardsID " +
-                           "WHERE pc.PackagesID = @packageId";
+            string query = "SELECT c.* FROM Cards c JOIN PackagesCards pc ON c.CardsID = pc.CardsID WHERE pc.PackagesID = @packageId";
 
             var parameter = new NpgsqlParameter("@packageId", packageId);
 

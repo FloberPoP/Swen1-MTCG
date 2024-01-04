@@ -34,10 +34,7 @@ namespace MTCG.Repositorys
 
         public static List<Card> GetUserStack(string username)
         {
-            string query = "SELECT c.* FROM Cards c " +
-                           "JOIN Stacks s ON c.CardsID = s.CardID " +
-                           "JOIN Users u ON s.UserID = u.UsersID " +
-                           "WHERE u.Username = @username AND s.Trading = false";
+            string query = "SELECT c.* FROM Cards c JOIN Stacks s ON c.CardsID = s.CardID JOIN Users u ON s.UserID = u.UsersID WHERE u.Username = @username AND s.Trading = false";
 
             var parameter = new NpgsqlParameter("@username", username);
 
@@ -63,10 +60,7 @@ namespace MTCG.Repositorys
         }
         public static bool AreCardsInUserStack(int userId, List<int> cardIds)
         {
-            string query = "SELECT COUNT(*) FROM Stacks " +
-                           "WHERE UserID = @userId " +
-                           "AND CardID = ANY(@cardIds) " +
-                           "AND Trading = false";
+            string query = "SELECT COUNT(*) FROM Stacks WHERE UserID = @userId AND CardID = ANY(@cardIds) AND Trading = false";
 
             var parameters = new NpgsqlParameter[]
             {

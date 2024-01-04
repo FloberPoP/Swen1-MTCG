@@ -23,7 +23,6 @@ namespace MTCG.Repositorys
 
                     foreach (Card card in package.Cards)
                     {
-                        Console.WriteLine($"cID: {card.CardsID}");
                         StackRepository.AddCardToUserStack(user.UserID, card.CardsID);
                     }
                     return true;
@@ -48,9 +47,7 @@ namespace MTCG.Repositorys
 
         private static Package GetRandomPackage(int userId)
         {
-            string query = "SELECT * FROM Packages " +
-                           "WHERE PackagesID NOT IN (SELECT PackagesID FROM Purchases WHERE UsersID = @userId) " +
-                           "ORDER BY RANDOM() LIMIT 1";
+            string query = "SELECT * FROM Packages WHERE PackagesID NOT IN (SELECT PackagesID FROM Purchases WHERE UsersID = @userId) ORDER BY RANDOM() LIMIT 1";
 
             var parameter = new NpgsqlParameter("@userId", userId);
 
@@ -70,8 +67,7 @@ namespace MTCG.Repositorys
         }
         public static void CreatePackages(Package p)
         {
-            string packageQuery = "INSERT INTO Packages (PackagesID, Price) " +
-                                  "VALUES (@packagesID, @price)";
+            string packageQuery = "INSERT INTO Packages (PackagesID, Price) VALUES (@packagesID, @price)";
 
             var packageParameters = new NpgsqlParameter[]
             {
@@ -84,8 +80,7 @@ namespace MTCG.Repositorys
             {
                 CardRepository.CreateCard(card);
 
-                string cardsQuery = "INSERT INTO PackagesCards (PackagesID, CardsID) " +
-                                    "VALUES (@packagesID, @cardsid)";
+                string cardsQuery = "INSERT INTO PackagesCards (PackagesID, CardsID) VALUES (@packagesID, @cardsid)";
 
                 var cardsParameters = new NpgsqlParameter[]
                 {

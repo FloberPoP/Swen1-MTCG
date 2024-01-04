@@ -11,8 +11,7 @@ namespace MTCG.Repositorys
         public static void CreateTrade(TradeRequirement t)
         {
 
-            string query = "INSERT INTO Trades (TradesID, UsersID, CardID, CardRegion, CardType, MinimumDamage)" +
-                           "VALUES (@tradesid, @usersid, @cardid, @cardregion, @cardtype, @minimumdamage)";
+            string query = "INSERT INTO Trades (TradesID, UsersID, CardID, CardRegion, CardType, MinimumDamage) VALUES (@tradesid, @usersid, @cardid, @cardregion, @cardtype, @minimumdamage)";
 
             var parameters = new NpgsqlParameter[]
             {

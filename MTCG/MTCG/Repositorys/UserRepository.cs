@@ -9,8 +9,7 @@ namespace MTCG.Repositorys
         private static readonly DataHandler? dataHandler = new DataHandler();
         public static void CreateUser(User user)
         {
-            string query = "INSERT INTO Users (Username, Coins, Elo, Password) " +
-                           "VALUES (@username, @coins, @elo, @password)";
+            string query = "INSERT INTO Users (Username, Coins, Elo, Password) VALUES (@username, @coins, @elo, @password)";
 
             var parameters = new NpgsqlParameter[]
             {

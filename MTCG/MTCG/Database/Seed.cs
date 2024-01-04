@@ -8,116 +8,44 @@ namespace MTCG.Database
 
         public static void Seeding()
         {
-            ClearDatabase();
-            //ClearPurchases();
+            //ClearDatabase();
             CreateTables();
-            //InsertCardData();
-            //InsertUser();     
+            //PrintTableContents();
         }
-        public static void CreateTables()
+        private static void CreateTables()
         {
             string createCards = "CREATE TABLE IF NOT EXISTS Cards (CardsID serial PRIMARY KEY, Name text, Damage int, Region text, Type text)";
             ExecuteNonQuery(createCards);
 
-            string createUsers = "CREATE TABLE IF NOT EXISTS Users " +
-                "(UsersID serial PRIMARY KEY, " +
-                "Username text, " +
-                "Password text, " +
-                "Bio text,"+
-                "Image text,"+
-                "Coins int, " +
-                "Elo int)";
+            string createUsers = "CREATE TABLE IF NOT EXISTS Users (UsersID serial PRIMARY KEY, Username text, Password text, Bio text, Image text, Coins int, Elo int)";
             ExecuteNonQuery(createUsers);
 
 
-            string createStacks = "CREATE TABLE IF NOT EXISTS Stacks " +
-                "(StacksID serial PRIMARY KEY, UserID int REFERENCES Users(UsersID), CardID int REFERENCES Cards(CardsID), Trading bool)";
+            string createStacks = "CREATE TABLE IF NOT EXISTS Stacks (StacksID serial PRIMARY KEY, UserID int REFERENCES Users(UsersID), CardID int REFERENCES Cards(CardsID), Trading bool)";
             ExecuteNonQuery(createStacks);
 
-            string createDecks = "CREATE TABLE IF NOT EXISTS Decks " +
-                "(DecksID serial PRIMARY KEY, UserID int REFERENCES Users(UsersID), CardID int REFERENCES Cards(CardsID))";
+            string createDecks = "CREATE TABLE IF NOT EXISTS Decks (DecksID serial PRIMARY KEY, UserID int REFERENCES Users(UsersID), CardID int REFERENCES Cards(CardsID))";
             ExecuteNonQuery(createDecks);
 
-            string createBattleLogs = "CREATE TABLE IF NOT EXISTS BattleLogs " +
-                "(BattleID serial PRIMARY KEY, " +
-                "Rounds text, " +
-                "LooserID int REFERENCES Users(UsersID), " +
-                "WinnerID int REFERENCES Users(UsersID)," +
-                "Draw bool)";
-
+            string createBattleLogs = "CREATE TABLE IF NOT EXISTS BattleLogs (BattleID serial PRIMARY KEY, Rounds text, LoserID int REFERENCES Users(UsersID), WinnerID int REFERENCES Users(UsersID), Draw bool)";
             ExecuteNonQuery(createBattleLogs);
 
-            string createPackages = "CREATE TABLE IF NOT EXISTS Packages " +
-                 "(PackagesID serial PRIMARY KEY, Price int)";
+            string createPackages = "CREATE TABLE IF NOT EXISTS Packages (PackagesID serial PRIMARY KEY, Price int)";
             ExecuteNonQuery(createPackages);
 
-            string createPackagesCards = "CREATE TABLE IF NOT EXISTS PackagesCards " +
-                 "(PackageCardID serial PRIMARY KEY, PackagesID int REFERENCES Packages(PackagesID), CardsID int REFERENCES Cards(CardsID))";
+            string createPackagesCards = "CREATE TABLE IF NOT EXISTS PackagesCards (PackageCardID serial PRIMARY KEY, PackagesID int REFERENCES Packages(PackagesID), CardsID int REFERENCES Cards(CardsID))";
             ExecuteNonQuery(createPackagesCards);
 
-            string createPurchases = "CREATE TABLE IF NOT EXISTS Purchases " +
-                "(PurchasesID serial PRIMARY KEY, PackagesID int REFERENCES Packages(PackagesID), UsersID int REFERENCES Users(UsersID))";
+            string createPurchases = "CREATE TABLE IF NOT EXISTS Purchases (PurchasesID serial PRIMARY KEY, PackagesID int REFERENCES Packages(PackagesID), UsersID int REFERENCES Users(UsersID))";
             ExecuteNonQuery(createPurchases);
 
-            string createTrades = "CREATE TABLE IF NOT EXISTS Trades " +
-                "(TradesID serial PRIMARY KEY, UsersID int REFERENCES Users(UsersID), CardID int REFERENCES Cards(CardsID), CardRegion text, CardType text, MinimumDamage int)";
+            string createTrades = "CREATE TABLE IF NOT EXISTS Trades (TradesID serial PRIMARY KEY, UsersID int REFERENCES Users(UsersID), CardID int REFERENCES Cards(CardsID), CardRegion text, CardType text, MinimumDamage int)";
             ExecuteNonQuery(createTrades);
         }
-
-        public static void InsertCardData()
-        {
-            string insertDataQuery = "INSERT INTO Cards (Name, Damage, Region, Type) VALUES " +
-                // Water
-                "('WaterGoblin', 10, 'WATER', 'MONSTER'), " +
-                "('WaterSpell', 20, 'WATER', 'SPELL'), " +
-                "('AnotherWaterSpell', 15, 'WATER', 'SPELL'), " +
-                "('WaterSerpent', 30, 'WATER', 'MONSTER'), " +
-                // Fire
-                "('Dragon', 50, 'FIRE', 'MONSTER'), " +
-                "('FireSpell', 25, 'FIRE', 'SPELL'), " +
-                "('AnotherFireSpell', 30, 'FIRE', 'SPELL'), " +
-                "('FirePhoenix', 55, 'FIRE', 'MONSTER'), " +
-                // Normal
-                "('Ork', 45, 'NORMAL', 'MONSTER'), " +
-                "('Golem', 40, 'NORMAL', 'MONSTER'), " +
-                "('NormalSpell', 25, 'NORMAL', 'SPELL'), " +
-                "('AnotherNormalSpell', 18, 'NORMAL', 'SPELL')";
-
-            ExecuteNonQuery(insertDataQuery);
-        }
-
-
-        public static void ClearDatabase()
+        private static void ClearDatabase()
         {
             ExecuteNonQuery("DROP TABLE IF EXISTS Stacks, Decks, Cards, Users, Packages, PackagesCards, Purchases, BattleLogs, Trades CASCADE");
         }
-
-        public static void ClearPurchases()
-        {
-            ExecuteNonQuery("DROP TABLE IF EXISTS Purchases, Users CASCADE");
-        }
-        private static void InsertUser()
-        {
-            ExecuteNonQuery("INSERT INTO Users (Username, Coins, Elo, Password) VALUES ('kienboec', 20, 100, 'daniel')");
-            ExecuteNonQuery("INSERT INTO Users (Username, Coins, Elo, Password) VALUES ('altenhof', 20, 100, 'markus')");
-
-            // Get the UserIDs for the inserted users
-            int kienboecUserID = 1;
-            int altenhofUserID = 2;
-
-            // Insert decks for each user with 4 cards each
-            ExecuteNonQuery($"INSERT INTO Decks (UserID, CardID) VALUES ({kienboecUserID}, (SELECT CardsID FROM Cards WHERE Name = 'WaterGoblin')), " +
-                                                                           $"({kienboecUserID}, (SELECT CardsID FROM Cards WHERE Name = 'WaterSpell')), " +
-                                                                           $"({kienboecUserID}, (SELECT CardsID FROM Cards WHERE Name = 'AnotherWaterSpell')), " +
-                                                                           $"({kienboecUserID}, (SELECT CardsID FROM Cards WHERE Name = 'WaterSerpent'))");
-
-            ExecuteNonQuery($"INSERT INTO Decks (UserID, CardID) VALUES ({altenhofUserID}, (SELECT CardsID FROM Cards WHERE Name = 'Dragon')), " +
-                                                                           $"({altenhofUserID}, (SELECT CardsID FROM Cards WHERE Name = 'FireSpell')), " +
-                                                                           $"({altenhofUserID}, (SELECT CardsID FROM Cards WHERE Name = 'AnotherFireSpell')), " +
-                                                                           $"({altenhofUserID}, (SELECT CardsID FROM Cards WHERE Name = 'FirePhoenix'))");
-        }
-
-
 
         private static void ExecuteNonQuery(string query)
         {
@@ -131,7 +59,7 @@ namespace MTCG.Database
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Error: " + ex.Message);
+                Console.WriteLine($"Error: {ex.Message}");
             }
             finally
             {
@@ -194,7 +122,7 @@ namespace MTCG.Database
 
                     for (int i = 0; i < reader.FieldCount; i++)
                     {
-                        Console.Write(reader.GetName(i) + "\t");
+                        Console.Write($"{reader.GetName(i)}\t");
                     }
 
                     Console.WriteLine();
@@ -203,7 +131,7 @@ namespace MTCG.Database
                     {
                         for (int i = 0; i < reader.FieldCount; i++)
                         {
-                            Console.Write(reader[i] + "\t");
+                            Console.Write($"{reader[i]}\t");
                         }
                         Console.WriteLine();
                     }

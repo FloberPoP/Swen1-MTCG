@@ -8,9 +8,9 @@ namespace MTCG.Database
 
         public static void Seeding()
         {
-            //ClearDatabase();
+            ClearDatabase();
             CreateTables();
-            //PrintTableContents();
+            PrintTableContents();
         }
         private static void CreateTables()
         {
@@ -19,7 +19,6 @@ namespace MTCG.Database
 
             string createUsers = "CREATE TABLE IF NOT EXISTS Users (UsersID serial PRIMARY KEY, Username text, Password text, Bio text, Image text, Coins int, Elo int)";
             ExecuteNonQuery(createUsers);
-
 
             string createStacks = "CREATE TABLE IF NOT EXISTS Stacks (StacksID serial PRIMARY KEY, UserID int REFERENCES Users(UsersID), CardID int REFERENCES Cards(CardsID), Trading bool)";
             ExecuteNonQuery(createStacks);

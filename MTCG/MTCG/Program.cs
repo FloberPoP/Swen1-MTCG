@@ -1,27 +1,19 @@
 ﻿using MTCG.Database;
-using System.Net;
 using MTCG.Controller;
 
 namespace MTCG
 {
     internal class Program
     {
-        static async Task Main(string[] args)
+        static void Main(string[] args)
         {
-            Seed.Seeding();           
+            Seed.Seeding();
 
-            string baseUrl = "http://localhost:10001/";
-            var listener = new HttpListener();
-            listener.Prefixes.Add(baseUrl);
-            listener.Start();
+            string ipAddress = "127.0.0.1"; // Use your desired IP address
+            int port = 10001; // Use your desired port
 
-            Console.WriteLine($"Server listening at {baseUrl}");
-
-            while (true)
-            {
-                var context = await listener.GetContextAsync();
-                await Task.Run(() => ServerController.ProcessRequest(context));
-            }
+            SocketServer socketServer = new SocketServer(ipAddress, port);
+            socketServer.Start();
         }
     }
 }

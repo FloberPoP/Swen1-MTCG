@@ -78,7 +78,6 @@ namespace MTCG.Controller
             finally
             {
                 networkStream.Close();
-                Seed.PrintTableContents();
             }
         }
 
@@ -88,7 +87,7 @@ namespace MTCG.Controller
             // Parse the request to extract method and path
             string[] requestLines = request.Split('\n');
             string[] requestTokens = requestLines[0].Split(' ');
-
+            
             if (requestTokens.Length < 3)
             {
                 // Invalid request format
@@ -173,11 +172,9 @@ namespace MTCG.Controller
                 if (clientResponse.StatusCode == (int)HttpStatusCode.Unauthorized)
                     return;
 
-                var segments = ServerController.GetUrlSegments(request);
-
-                if (segments.Length >= 3)
+                string username = ServerController.GetUsernameFromPath(request);
+                if (UserRepository.GetUserInfoByUsername(username) != null)
                 {
-                    string username = segments[2].Trim('/');
                     User user = UserRepository.GetUserInfoByUsername(username);
 
                     if (user != null)
@@ -221,7 +218,7 @@ namespace MTCG.Controller
                 if (clientResponse.StatusCode == (int)HttpStatusCode.Unauthorized)
                     return;
 
-                string username = ServerController.GetUrlSegments(request).Last();
+                string username = ServerController.GetUsernameFromPath(request);
                 JObject requestBodyJson = JsonConvert.DeserializeObject<JObject>(ServerController.GetJasonPart(request));
 
                 User user = UserRepository.GetUserByUsername(username);
@@ -426,10 +423,16 @@ namespace MTCG.Controller
 
             else if (method == "PUT")
             {
-                JObject requestBodyJson = JsonConvert.DeserializeObject<JObject>(ServerController.GetJasonPart(request));
+                string[] strArray = ServerController.GetJasonPart(request).Replace("[", "").Replace("]", "").Replace("\"", "").Split(',');
 
-                JArray cardIdsArray = requestBodyJson.Value<JArray>("CardIds");
-                List<int> cardIds = cardIdsArray?.ToObject<List<int>>() ?? new List<int>();
+                List<int> cardIds = new List<int>();
+                foreach (string s in strArray)
+                {
+                    if (int.TryParse(s, out int number))
+                        cardIds.Add(number);
+                    else
+                        Console.WriteLine($"Unable to parse: {s}");
+                }
 
                 if (cardIds.Count == 4)
                 {
@@ -593,8 +596,9 @@ namespace MTCG.Controller
                 string username = ServerController.GetUserNameFromToken(token);
                 User user = UserRepository.GetUserByUsername(username);
 
-                var segments = ServerController.GetUrlSegments(request);
-                if (segments.Length < 3)
+                int tradeID = ServerController.GetTradeIDFromPath(request);
+                Console.WriteLine(tradeID);
+                if (tradeID == -1)
                 {
                     // Normal POST request without trade ID in the URL
                     TradeRequirement tradeOffer = JsonConvert.DeserializeObject<TradeRequirement>(ServerController.GetJasonPart(request));
@@ -619,83 +623,84 @@ namespace MTCG.Controller
                 }
                 else
                 {
-                    // POST request with trade ID in the URL
-                    int tradeID;
-                    if (int.TryParse(segments[2].Trim('/'), out tradeID))
+
+                    string acceptingCardIDstring = ServerController.GetJasonPart(request);
+                    acceptingCardIDstring = acceptingCardIDstring.Replace("\"", "");
+                    int acceptingCardID;
+                    if (!int.TryParse(acceptingCardIDstring, out acceptingCardID))
                     {
-                        int acceptingCardID;
-                        if (!int.TryParse(request.Trim('"'), out acceptingCardID))
-                        {
-                            clientResponse.ResponseString = "Invalid card ID format.";
-                            clientResponse.StatusCode = (int)HttpStatusCode.BadRequest;
-                            return;
-                        }
+                        clientResponse.ResponseString = "Invalid CardID format.";
+                        clientResponse.StatusCode = (int)HttpStatusCode.BadRequest;
+                        return;
+                    }
 
-                        TradeRequirement tradeOffer = TradingRepository.GetTradebyTradID(tradeID);
+                    TradeRequirement tradeOffer = TradingRepository.GetTradebyTradID(tradeID);
 
-                        // Check if the trade exists
-                        if (tradeOffer == null)
-                        {
-                            clientResponse.ResponseString = "Trade not found.";
-                            clientResponse.StatusCode = (int)HttpStatusCode.NotFound;
-                        }
-                        // Check if the trader is not the same person as the trade acceptor
-                        else if (tradeOffer.UsersID == user.UserID)
-                        {
-                            clientResponse.ResponseString = "You cannot accept your own trade offer.";
-                            clientResponse.StatusCode = (int)HttpStatusCode.BadRequest;
-                        }
-                        // Check if user has this card
-                        else if (!StackRepository.AreCardsInUserStack(user.UserID, new List<int> { acceptingCardID }))
-                        {
-                            clientResponse.ResponseString = "You don't own the Card";
-                            clientResponse.StatusCode = (int)HttpStatusCode.BadRequest;
-                        }
-                        else if (DeckRepository.IsCardInUserDeck(user.UserID, acceptingCardID))
-                        {
-                            clientResponse.ResponseString = "Card to Trade is Currently in Use in Deck";
-                            clientResponse.StatusCode = (int)HttpStatusCode.Conflict;
-                        }
-                        else if (CardRepository.IsCardTrading(acceptingCardID))
-                        {
-                            clientResponse.ResponseString = "Card to Trade is already Trading";
-                            clientResponse.StatusCode = (int)HttpStatusCode.Conflict;
-                        }
-                        // Check if the card has all the requirements
-                        else if (!CardRepository.IsCardEligibleForTrade(acceptingCardID, tradeOffer.CardRegion, tradeOffer.CardType, tradeOffer.MinimumDamage))
-                        {
-                            clientResponse.ResponseString = "The provided card does not meet the trade requirements.";
-                            clientResponse.StatusCode = (int)HttpStatusCode.BadRequest;
-                        }
-                        else
-                        {
-                            // Process the trade acceptance
-                            TradingRepository.AcceptTrade(tradeID, acceptingCardID, user.UserID);
-                            clientResponse.ResponseString = "Trade accepted successfully.";
-                        }
+                    // Check if the trade exists
+                    if (tradeOffer == null)
+                    {
+                        clientResponse.ResponseString = "Trade not found.";
+                        clientResponse.StatusCode = (int)HttpStatusCode.NotFound;
+                    }
+                    // Check if the trader is not the same person as the trade acceptor
+                    else if (tradeOffer.UsersID == user.UserID)
+                    {
+                        clientResponse.ResponseString = "You cannot accept your own trade offer.";
+                        clientResponse.StatusCode = (int)HttpStatusCode.BadRequest;
+                    }
+                    // Check if user has this card
+                    else if (!StackRepository.AreCardsInUserStack(user.UserID, new List<int> { acceptingCardID }))
+                    {
+                        clientResponse.ResponseString = "You don't own the Card";
+                        clientResponse.StatusCode = (int)HttpStatusCode.BadRequest;
+                    }
+                    else if (DeckRepository.IsCardInUserDeck(user.UserID, acceptingCardID))
+                    {
+                        clientResponse.ResponseString = "Card to Trade is Currently in Use in Deck";
+                        clientResponse.StatusCode = (int)HttpStatusCode.Conflict;
+                    }
+                    else if (CardRepository.IsCardTrading(acceptingCardID))
+                    {
+                        clientResponse.ResponseString = "Card to Trade is already Trading";
+                        clientResponse.StatusCode = (int)HttpStatusCode.Conflict;
+                    }
+                    // Check if the card has all the requirements
+                    else if (!CardRepository.IsCardEligibleForTrade(acceptingCardID, tradeOffer.CardRegion, tradeOffer.CardType, tradeOffer.MinimumDamage))
+                    {
+                        clientResponse.ResponseString = "The provided card does not meet the trade requirements.";
+                        clientResponse.StatusCode = (int)HttpStatusCode.BadRequest;
                     }
                     else
                     {
-                        clientResponse.ResponseString = "Invalid trade ID format.";
-                        clientResponse.StatusCode = (int)HttpStatusCode.BadRequest;
-                    }
+                        // Process the trade acceptance
+                        TradingRepository.AcceptTrade(tradeID, acceptingCardID, user.UserID);
+                        clientResponse.ResponseString = "Trade accepted.";
+                    }           
                 }
             }
             else if (method == "DELETE")
             {
-                var segments = ServerController.GetUrlSegments(request);
+                string username = ServerController.GetUserNameFromToken(token);
+                int tradesid = ServerController.GetTradeIDFromPath(request);
 
-                if (segments.Length >= 3)
+                if (tradesid != -1)
                 {
-                    int tradesid = Convert.ToInt32(segments[2].Trim('/'));
                     TradeRequirement t = TradingRepository.GetTradebyTradID(tradesid);
 
                     if (t != null)
                     {
-                        CardRepository.UpdateCardTradingStatus(t.UsersID, t.CardID, false);
-                        TradingRepository.DeleteTradeById(t.TradesID);
-                        clientResponse.ResponseString = $"Trade with ID: {tradesid} Deleted.";
-                        clientResponse.StatusCode = (int)HttpStatusCode.OK;
+                        if(t.UsersID == UserRepository.GetUserByUsername(username).UserID)
+                        {
+                            CardRepository.UpdateCardTradingStatus(t.UsersID, t.CardID, false);
+                            TradingRepository.DeleteTradeById(t.TradesID);
+                            clientResponse.ResponseString = $"Trade with ID: {tradesid} Deleted.";
+                            clientResponse.StatusCode = (int)HttpStatusCode.OK;
+                        }                     
+                        else
+                        {
+                            clientResponse.ResponseString = "Permission denied. You can only delete your own trades.";
+                            clientResponse.StatusCode = (int)HttpStatusCode.Unauthorized;
+                        }
                     }
                     else
                     {
@@ -734,7 +739,12 @@ namespace MTCG.Controller
                 cr.ResponseString = "Unauthorized: Invalid token.";
                 cr.StatusCode = (int)HttpStatusCode.Unauthorized;
             }
-
+            
+            if(UserRepository.GetUserByUsername(ServerController.GetUserNameFromToken(token)) == null)
+            {
+                cr.ResponseString = "Unauthorized: Invalid token.";
+                cr.StatusCode = (int)HttpStatusCode.Unauthorized;
+            }
             return cr;
         }
     }

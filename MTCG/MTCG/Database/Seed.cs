@@ -8,9 +8,9 @@ namespace MTCG.Database
 
         public static void Seeding()
         {
-            ClearDatabase();
+            //ClearDatabase();
             CreateTables();
-            PrintTableContents();
+            //PrintTableContents();
         }
         private static void CreateTables()
         {

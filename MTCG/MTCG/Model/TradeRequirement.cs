@@ -1,6 +1,6 @@
 ﻿namespace MTCG.Model
 {
-    internal class TradeRequirement
+    public class TradeRequirement
     {
         public int TradesID { get; set; }
         public int UsersID { get; set; }

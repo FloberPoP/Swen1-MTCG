@@ -5,7 +5,7 @@ using NpgsqlTypes;
 
 namespace MTCG.Repositorys
 {
-    internal static class StackRepository
+    public static class StackRepository
     {
         private static readonly DataHandler? dataHandler = new DataHandler();
         public static void AddCardToUserStack(int userId, int cardId)

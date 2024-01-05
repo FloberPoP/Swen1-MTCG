@@ -2,7 +2,7 @@
 
 namespace MTCG.Database
 {
-    internal static class Seed
+    public static class Seed
     {
         private static readonly DataHandler? dataHandler = new DataHandler();
 
@@ -10,9 +10,9 @@ namespace MTCG.Database
         {
             //ClearDatabase();
             CreateTables();
-            //PrintTableContents();
+            PrintTableContents();
         }
-        private static void CreateTables()
+        public static void CreateTables()
         {
             string createCards = "CREATE TABLE IF NOT EXISTS Cards (CardsID serial PRIMARY KEY, Name text, Damage int, Region text, Type text)";
             ExecuteNonQuery(createCards);
@@ -41,7 +41,7 @@ namespace MTCG.Database
             string createTrades = "CREATE TABLE IF NOT EXISTS Trades (TradesID serial PRIMARY KEY, UsersID int REFERENCES Users(UsersID), CardID int REFERENCES Cards(CardsID), CardRegion text, CardType text, MinimumDamage int)";
             ExecuteNonQuery(createTrades);
         }
-        private static void ClearDatabase()
+        public static void ClearDatabase()
         {
             ExecuteNonQuery("DROP TABLE IF EXISTS Stacks, Decks, Cards, Users, Packages, PackagesCards, Purchases, BattleLogs, Trades CASCADE");
         }

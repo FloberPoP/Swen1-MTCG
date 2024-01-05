@@ -623,7 +623,6 @@ namespace MTCG.Controller
                 }
                 else
                 {
-
                     string acceptingCardIDstring = ServerController.GetJasonPart(request);
                     acceptingCardIDstring = acceptingCardIDstring.Replace("\"", "");
                     int acceptingCardID;

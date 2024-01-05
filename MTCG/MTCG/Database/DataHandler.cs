@@ -1,7 +1,7 @@
 ﻿using Npgsql;
 namespace MTCG.Database
 {
-    internal class DataHandler
+    public class DataHandler
     {
         private string connectionString;
         public NpgsqlConnection Connection { get; }

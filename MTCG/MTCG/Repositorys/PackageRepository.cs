@@ -4,7 +4,7 @@ using Npgsql;
 
 namespace MTCG.Repositorys
 {
-    internal static class PackageRepository
+    public static class PackageRepository
     {
         private static readonly DataHandler? dataHandler = new DataHandler();
 

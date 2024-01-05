@@ -4,7 +4,7 @@ using Npgsql;
 
 namespace MTCG.Repositorys
 {
-    internal static class DeckRepository
+    public static class DeckRepository
     {
         private static readonly DataHandler? dataHandler = new DataHandler();
         public static List<Card> GetUserDeck(string username)

@@ -4,7 +4,7 @@ using Npgsql;
 
 namespace MTCG.Repositorys
 {
-    internal static class UserRepository
+    public static class UserRepository
     {
         private static readonly DataHandler? dataHandler = new DataHandler();
         public static void CreateUser(User user)
@@ -38,9 +38,6 @@ namespace MTCG.Repositorys
 
             dataHandler.ExecuteNonQuery(query, parameters);
         }
-
-
-
         public static User GetUserByUsername(string username)
         {
             string query = "SELECT * FROM Users WHERE Username = @username";

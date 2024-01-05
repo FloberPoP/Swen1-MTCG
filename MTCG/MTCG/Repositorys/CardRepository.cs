@@ -4,7 +4,7 @@ using Npgsql;
 
 namespace MTCG.Repositorys
 {
-    internal static class CardRepository
+    public static class CardRepository
     {
         public static readonly DataHandler? dataHandler = new DataHandler();
         public static void CreateCard(Card c)
@@ -98,6 +98,30 @@ namespace MTCG.Repositorys
             {
                 return reader != null && reader.Read();
             }
+        }
+        public static Card GetCardByName(string cardName)
+        {
+            string query = "SELECT * FROM Cards WHERE Name = @cardName";
+
+            var parameter = new NpgsqlParameter("@cardName", cardName);
+
+            using (var reader = dataHandler.ExecuteSelectQuery(query, new NpgsqlParameter[] { parameter }))
+            {
+                if (reader != null && reader.Read())
+                {
+                    Card c = new
+                    (
+                         reader.GetString(reader.GetOrdinal("Name")),
+                         reader.GetInt32(reader.GetOrdinal("Damage")),
+                         Enum.Parse<ERegions>(reader.GetString(reader.GetOrdinal("Region"))),
+                         Enum.Parse<EType>(reader.GetString(reader.GetOrdinal("Type")))
+                    );
+                    c.CardsID = reader.GetInt32(reader.GetOrdinal("CardsID"));
+                    return c;
+                }
+            }
+
+            return null;
         }
 
     }

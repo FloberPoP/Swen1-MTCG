@@ -1,10 +1,9 @@
 ﻿using MTCG.Model;
 using MTCG.Repositorys;
-using System.Threading.Channels;
 
 namespace MTCG.Battling
 {
-    internal class Battle
+    public class Battle
     {
         private User? winner;
         private User? loser;
@@ -81,7 +80,7 @@ namespace MTCG.Battling
             return log;
         }
 
-        private Card DrawCard(List<Card> cards) 
+        public Card DrawCard(List<Card> cards) 
         {
             Random random = new Random();
             int randomIndex = random.Next(cards.Count);
@@ -90,7 +89,7 @@ namespace MTCG.Battling
             return drawnCard;
         }
 
-        private bool CheckForBuff(List<Card> deck, ERegions targetRegion)
+        public bool CheckForBuff(List<Card> deck, ERegions targetRegion)
         {
             int count = deck.Count(card => card.Region == targetRegion);
             
@@ -126,7 +125,7 @@ namespace MTCG.Battling
             return damage;            
         }
            
-        private void UpdateUserElo(User winner, User loser)
+        public void UpdateUserElo(User winner, User loser)
         {
             int kFactor = 10;
 

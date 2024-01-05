@@ -1,6 +1,6 @@
 ﻿namespace MTCG.Battling
 {
-    internal class BattleLog
+    public class BattleLog
     {
         public int BattleID { get; set; }
         public string? Rounds { get; set; }

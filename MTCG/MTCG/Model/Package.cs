@@ -1,6 +1,6 @@
 ﻿namespace MTCG.Model
 {
-    internal class Package
+    public class Package
     {
         public int PackageID { get; set; }
         public List<Card> Cards { get; set; }

@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "8G2X6OqUSekbyd6c6VX5NRzKLLVE9pzi8C85BBYtj98vFuh+brQ+NjDqXrXakofKoIURd8VGa3bCmLQNYe4IOg==",
+  "dgSpecHash": "2D3kB+NzvoAFANRm9hu1IkJDzeXMjWwzRYgLxzsbg5ivDoaHpUvaK/+0BIrL13yY9u8gqPoBExOKnX34KZifbA==",
   "success": true,
   "projectFilePath": "D:\\FH\\GitRepo\\Swen1-MTCG\\MTCG\\MTCG\\MTCG.csproj",
   "expectedPackageFiles": [
@@ -39,6 +39,7 @@
     "C:\\Users\\Poppinger\\.nuget\\packages\\microsoft.net.http.headers\\2.2.0\\microsoft.net.http.headers.2.2.0.nupkg.sha512",
     "C:\\Users\\Poppinger\\.nuget\\packages\\microsoft.netcore.platforms\\1.0.1\\microsoft.netcore.platforms.1.0.1.nupkg.sha512",
     "C:\\Users\\Poppinger\\.nuget\\packages\\microsoft.netcore.targets\\1.0.1\\microsoft.netcore.targets.1.0.1.nupkg.sha512",
+    "C:\\Users\\Poppinger\\.nuget\\packages\\mstest.testframework\\3.0.4\\mstest.testframework.3.0.4.nupkg.sha512",
     "C:\\Users\\Poppinger\\.nuget\\packages\\newtonsoft.json\\13.0.3\\newtonsoft.json.13.0.3.nupkg.sha512",
     "C:\\Users\\Poppinger\\.nuget\\packages\\npgsql\\7.0.6\\npgsql.7.0.6.nupkg.sha512",
     "C:\\Users\\Poppinger\\.nuget\\packages\\runtime.native.system\\4.0.0\\runtime.native.system.4.0.0.nupkg.sha512",

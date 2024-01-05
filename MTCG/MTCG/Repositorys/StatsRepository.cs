@@ -5,7 +5,7 @@ using Npgsql;
 
 namespace MTCG.Repositorys
 {
-    internal static class StatsRepository
+    public static class StatsRepository
     {
         private static readonly DataHandler? dataHandler = new DataHandler();
         public static int GetTotalGames(int userID)

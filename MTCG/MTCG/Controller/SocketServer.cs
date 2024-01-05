@@ -1,5 +1,4 @@
 ﻿using MTCG.Battling;
-using MTCG.Database;
 using MTCG.Model;
 using MTCG.Repositorys;
 using Newtonsoft.Json;
@@ -31,7 +30,7 @@ namespace MTCG.Controller
             while (true)
             {
                 Socket clientSocket = serverSocket.Accept();
-                HandleClient(clientSocket);
+                Task.Run(() => HandleClient(clientSocket));
             }
         }
 
@@ -54,7 +53,6 @@ namespace MTCG.Controller
 
             clientSocket.Close();
         }
-
 
 
         private void SendResponse(ClientResponse clientResponse, NetworkStream networkStream)

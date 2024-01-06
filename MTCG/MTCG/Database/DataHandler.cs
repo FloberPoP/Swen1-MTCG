@@ -1,7 +1,7 @@
 ﻿using Npgsql;
 namespace MTCG.Database
 {
-    public class DataHandler
+    public class DataHandler : IDisposable
     {
         private string connectionString;
         public NpgsqlConnection Connection { get; }
@@ -73,6 +73,11 @@ namespace MTCG.Database
                 Console.WriteLine($"Error: {ex.Message}");
                 return -1;
             }
+        }
+
+        public void Dispose()
+        {
+           CloseConnection();
         }
     }
 }

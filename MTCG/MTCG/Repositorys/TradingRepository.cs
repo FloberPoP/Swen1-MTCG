@@ -6,8 +6,6 @@ namespace MTCG.Repositorys
 {
     public static class TradingRepository
     {
-        public static readonly DataHandler? dataHandler = new DataHandler();
-
         public static void CreateTrade(TradeRequirement t)
         {
 
@@ -23,7 +21,10 @@ namespace MTCG.Repositorys
                 new NpgsqlParameter("@minimumdamage", t.MinimumDamage)
             };
 
-            dataHandler.ExecuteNonQuery(query, parameters);
+            using (DataHandler dbh = new DataHandler())
+            {
+                dbh.ExecuteNonQuery(query, parameters);
+            }
         }
 
         public static TradeRequirement GetTradebyTradID(int  tradesid)
@@ -32,7 +33,8 @@ namespace MTCG.Repositorys
 
             var parameter = new NpgsqlParameter("@tradesid", tradesid);
 
-            using (var reader = dataHandler.ExecuteSelectQuery(query, new NpgsqlParameter[] { parameter }))
+            using (DataHandler dbh = new DataHandler())
+            using (var reader = dbh.ExecuteSelectQuery(query, new NpgsqlParameter[] { parameter }))
             {
                 if (reader != null && reader.Read())
                 {
@@ -55,7 +57,8 @@ namespace MTCG.Repositorys
 
             string query = "SELECT * FROM Trades";
 
-            using (var reader = dataHandler.ExecuteSelectQuery(query, null))
+            using (DataHandler dbh = new DataHandler())
+            using (var reader = dbh.ExecuteSelectQuery(query, null))
             {
                 while (reader != null && reader.Read())
                 {
@@ -81,7 +84,10 @@ namespace MTCG.Repositorys
 
             var parameter = new NpgsqlParameter("@tradesid", tradesId);
 
-            dataHandler.ExecuteNonQuery(query, new NpgsqlParameter[] { parameter });
+            using (DataHandler dbh = new DataHandler())
+            {
+                dbh.ExecuteNonQuery(query, new NpgsqlParameter[] { parameter });
+            }
         }
 
         public static void AcceptTrade(int tradeID, int acceptingCardID, int acceptingUserID)

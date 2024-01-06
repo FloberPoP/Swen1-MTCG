@@ -31,7 +31,6 @@ namespace MTCG.Controller
             {
                 Socket clientSocket = serverSocket.Accept();
                 Task.Run(() => HandleClient(clientSocket));
-                //HandleClient(clientSocket);
             }
         }
 

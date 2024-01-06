@@ -6,7 +6,6 @@ namespace MTCG.Repositorys
 {
     public static class CardRepository
     {
-        public static readonly DataHandler? dataHandler = new DataHandler();
         public static void CreateCard(Card c)
         {
 
@@ -21,7 +20,10 @@ namespace MTCG.Repositorys
                 new NpgsqlParameter("@type", c.Type.ToString())
             };
 
-            dataHandler.ExecuteNonQuery(query, parameters);
+            using (DataHandler dbh = new DataHandler())
+            {
+                dbh.ExecuteNonQuery(query, parameters);
+            }
         }
 
         public static List<Card> GetCardsByPackageId(int packageId)
@@ -32,7 +34,8 @@ namespace MTCG.Repositorys
 
             List<Card> cards = new List<Card>();
 
-            using (var reader = dataHandler.ExecuteSelectQuery(query, new NpgsqlParameter[] { parameter }))
+            using (DataHandler dbh = new DataHandler())
+            using (var reader = dbh.ExecuteSelectQuery(query, new NpgsqlParameter[] { parameter }))
             {
                 while (reader != null && reader.Read())
                 {
@@ -54,7 +57,7 @@ namespace MTCG.Repositorys
 
         public static void UpdateCardTradingStatus(int userId, int cardId, bool tradingStatus)
         {
-            string updateQuery = "UPDATE Stacks SET Trading = @tradingStatus WHERE UserID = @userId AND CardID = @cardId";
+            string query = "UPDATE Stacks SET Trading = @tradingStatus WHERE UserID = @userId AND CardID = @cardId";
 
             var parameters = new NpgsqlParameter[]
             {
@@ -63,7 +66,10 @@ namespace MTCG.Repositorys
                 new NpgsqlParameter("@tradingStatus", tradingStatus)
             };
 
-            dataHandler.ExecuteNonQuery(updateQuery, parameters);
+            using (DataHandler dbh = new DataHandler())
+            {
+                dbh.ExecuteNonQuery(query, parameters);
+            }
         }
 
 
@@ -73,7 +79,8 @@ namespace MTCG.Repositorys
 
             var parameter = new NpgsqlParameter("@cardId", cardId);
 
-            using (var reader = dataHandler.ExecuteSelectQuery(checkQuery, new NpgsqlParameter[] { parameter }))
+            using (DataHandler dbh = new DataHandler())
+            using (var reader = dbh.ExecuteSelectQuery(checkQuery, new NpgsqlParameter[] { parameter }))
             {
                 if (reader != null && reader.Read())
                 {
@@ -94,7 +101,8 @@ namespace MTCG.Repositorys
                 new NpgsqlParameter("@minimumDamage", tradeOfferMinimumDamage)
             };
 
-            using (var reader = dataHandler.ExecuteSelectQuery(checkQuery, parameters))
+            using (DataHandler dbh = new DataHandler())
+            using (var reader = dbh.ExecuteSelectQuery(checkQuery, parameters))
             {
                 return reader != null && reader.Read();
             }
@@ -105,7 +113,8 @@ namespace MTCG.Repositorys
 
             var parameter = new NpgsqlParameter("@cardName", cardName);
 
-            using (var reader = dataHandler.ExecuteSelectQuery(query, new NpgsqlParameter[] { parameter }))
+            using (DataHandler dbh = new DataHandler())
+            using (var reader = dbh.ExecuteSelectQuery(query, new NpgsqlParameter[] { parameter }))
             {
                 if (reader != null && reader.Read())
                 {

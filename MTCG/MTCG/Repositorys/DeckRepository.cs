@@ -6,7 +6,6 @@ namespace MTCG.Repositorys
 {
     public static class DeckRepository
     {
-        private static readonly DataHandler? dataHandler = new DataHandler();
         public static List<Card> GetUserDeck(string username)
         {
             string query = "SELECT c.* FROM Cards c JOIN Decks d ON c.CardsID = d.CardID JOIN Users u ON d.UserID = u.UsersID WHERE u.Username = @username";
@@ -15,7 +14,8 @@ namespace MTCG.Repositorys
 
             List<Card> userDeck = new List<Card>();
 
-            using (var reader = dataHandler.ExecuteSelectQuery(query, new NpgsqlParameter[] { parameter }))
+            using (DataHandler dbh = new DataHandler())
+            using (var reader = dbh.ExecuteSelectQuery(query, new NpgsqlParameter[] { parameter }))
             {
                 while (reader != null && reader.Read())
                 {
@@ -38,7 +38,10 @@ namespace MTCG.Repositorys
 
             var parameter = new NpgsqlParameter("@userId", userId);
 
-            dataHandler.ExecuteNonQuery(query, new NpgsqlParameter[] { parameter });
+            using (DataHandler dbh = new DataHandler())
+            {
+                dbh.ExecuteNonQuery(query, new NpgsqlParameter[] { parameter });
+            }           
         }
         public static void AddCardToUserDeck(int userId, List<int> cardIDs)
         {
@@ -52,7 +55,10 @@ namespace MTCG.Repositorys
                     new NpgsqlParameter("@cardId", cardId)
                 };
 
-                dataHandler.ExecuteNonQuery(query, parameters);
+                using (DataHandler dbh = new DataHandler())
+                {
+                    dbh.ExecuteNonQuery(query, parameters);
+                }
             }
         }
 
@@ -66,11 +72,11 @@ namespace MTCG.Repositorys
                 new NpgsqlParameter("@cardId", cardId)
             };
 
-            using (var reader = dataHandler.ExecuteSelectQuery(query, parameters))
+            using (DataHandler dbh = new DataHandler())
+            using (var reader = dbh.ExecuteSelectQuery(query, parameters))
             {
                 return reader != null && reader.HasRows;
             }
         }
-
     }
 }

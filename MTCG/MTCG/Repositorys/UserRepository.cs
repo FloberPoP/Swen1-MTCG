@@ -6,7 +6,6 @@ namespace MTCG.Repositorys
 {
     public static class UserRepository
     {
-        private static readonly DataHandler? dataHandler = new DataHandler();
         public static void CreateUser(User user)
         {
             string query = "INSERT INTO Users (Username, Coins, Elo, Password) VALUES (@username, @coins, @elo, @password)";
@@ -19,7 +18,10 @@ namespace MTCG.Repositorys
                 new NpgsqlParameter("@password", user.Password)
             };
 
-            dataHandler.ExecuteNonQuery(query, parameters);
+            using(DataHandler dbh = new DataHandler())
+            {
+                dbh.ExecuteNonQuery(query, parameters);
+            }             
         }
 
         public static void UpdateUser(User user)
@@ -36,15 +38,18 @@ namespace MTCG.Repositorys
                 new NpgsqlParameter("@image", (object)user.Image ?? DBNull.Value)
             };
 
-            dataHandler.ExecuteNonQuery(query, parameters);
+            using (DataHandler dbh = new DataHandler())
+            {
+                dbh.ExecuteNonQuery(query, parameters);
+            }
         }
         public static User GetUserByUsername(string username)
         {
             string query = "SELECT * FROM Users WHERE Username = @username";
 
             var parameter = new NpgsqlParameter("@username", username);
-
-            using (var reader = dataHandler.ExecuteSelectQuery(query, new NpgsqlParameter[] { parameter }))
+            using (DataHandler dbh = new DataHandler())
+            using (var reader = dbh.ExecuteSelectQuery(query, new NpgsqlParameter[] { parameter }))
             {
                 if (reader != null && reader.Read())
                 {
@@ -69,8 +74,8 @@ namespace MTCG.Repositorys
             string query = "SELECT Username, Password, Bio, Image FROM Users WHERE Username = @username";
 
             var parameter = new NpgsqlParameter("@username", username);
-
-            using (var reader = dataHandler.ExecuteSelectQuery(query, new NpgsqlParameter[] { parameter }))
+            using (DataHandler dbh = new DataHandler())
+            using (var reader = dbh.ExecuteSelectQuery(query, new NpgsqlParameter[] { parameter }))
             {
                 if (reader != null && reader.Read())
                 {
@@ -102,7 +107,8 @@ namespace MTCG.Repositorys
                 new NpgsqlParameter("@elo", currentUser.Elo)
             };
 
-            using (var reader = dataHandler.ExecuteSelectQuery(query, parameters))
+            using (DataHandler dbh = new DataHandler())
+            using (var reader = dbh.ExecuteSelectQuery(query, parameters))
             {
                 if (reader != null && reader.Read())
                 {

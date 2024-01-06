@@ -6,8 +6,7 @@ using NpgsqlTypes;
 namespace MTCG.Repositorys
 {
     public static class StackRepository
-    {
-        private static readonly DataHandler? dataHandler = new DataHandler();
+    {       
         public static void AddCardToUserStack(int userId, int cardId)
         {
             string query = "INSERT INTO Stacks (UserID, CardID, Trading) VALUES (@userId, @cardId, false)";
@@ -18,7 +17,10 @@ namespace MTCG.Repositorys
                 new NpgsqlParameter("@cardId", cardId)
             };
 
-            dataHandler.ExecuteNonQuery(query, parameters);
+            using (DataHandler dbh = new DataHandler())
+            {
+                dbh.ExecuteNonQuery(query, parameters);
+            }           
         }
 
         public static void DeleteCardFromUserStack(int userID, int cardID)
@@ -29,7 +31,11 @@ namespace MTCG.Repositorys
                 new NpgsqlParameter("@userID", userID),
                 new NpgsqlParameter("@cardID", cardID)
             };
-            dataHandler.ExecuteNonQuery(deleteCardFromStackQuery, deleteCardParameters);
+
+            using (DataHandler dbh = new DataHandler())
+            {
+                dbh.ExecuteNonQuery(deleteCardFromStackQuery, deleteCardParameters);
+            }           
         }
 
         public static List<Card> GetUserStack(string username)
@@ -40,7 +46,8 @@ namespace MTCG.Repositorys
 
             List<Card> userStack = new List<Card>();
 
-            using (var reader = dataHandler.ExecuteSelectQuery(query, new NpgsqlParameter[] { parameter }))
+            using (DataHandler dbh = new DataHandler())
+            using (var reader = dbh.ExecuteSelectQuery(query, new NpgsqlParameter[] { parameter }))
             {
                 while (reader != null && reader.Read())
                 {
@@ -71,7 +78,8 @@ namespace MTCG.Repositorys
                 }
             };
 
-            using (var reader = dataHandler.ExecuteSelectQuery(query, parameters))
+            using (DataHandler dbh = new DataHandler())
+            using (var reader = dbh.ExecuteSelectQuery(query, parameters))
             {
                 if (reader.Read())
                 {

@@ -4,8 +4,6 @@ namespace MTCG.Database
 {
     public static class Seed
     {
-        private static readonly DataHandler? dataHandler = new DataHandler();
-
         public static void Seeding()
         {
             //ClearDatabase();
@@ -48,21 +46,24 @@ namespace MTCG.Database
 
         private static void ExecuteNonQuery(string query)
         {
-            try
+            using (DataHandler dbh = new DataHandler())
             {
-                dataHandler.OpenConnection();
-                using (var cmd = new NpgsqlCommand(query, dataHandler.Connection))
+                try
                 {
-                    cmd.ExecuteNonQuery();
+                    dbh.OpenConnection();
+                    using (var cmd = new NpgsqlCommand(query, dbh.Connection))
+                    {
+                        cmd.ExecuteNonQuery();
+                    }
                 }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error: {ex.Message}");
-            }
-            finally
-            {
-                dataHandler.CloseConnection();
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error: {ex.Message}");
+                }
+                finally
+                {
+                    dbh.CloseConnection();
+                }
             }
         }
 
@@ -109,42 +110,45 @@ namespace MTCG.Database
 
         private static void PrintTable(string tableName, string selectQuery)
         {
-            try
+            using (DataHandler dbh = new DataHandler())
             {
-                dataHandler.OpenConnection();
-
-                using (var cmd = new NpgsqlCommand(selectQuery, dataHandler.Connection))
-                using (var reader = cmd.ExecuteReader())
+                try
                 {
-                    Console.WriteLine($"Table: {tableName}");
-                    Console.WriteLine("--------------------------------------------------");
+                    dbh.OpenConnection();
 
-                    for (int i = 0; i < reader.FieldCount; i++)
+                    using (var cmd = new NpgsqlCommand(selectQuery, dbh.Connection))
+                    using (var reader = cmd.ExecuteReader())
                     {
-                        Console.Write($"{reader.GetName(i)}\t");
-                    }
+                        Console.WriteLine($"Table: {tableName}");
+                        Console.WriteLine("--------------------------------------------------");
 
-                    Console.WriteLine();
-
-                    while (reader.Read())
-                    {
                         for (int i = 0; i < reader.FieldCount; i++)
                         {
-                            Console.Write($"{reader[i]}\t");
+                            Console.Write($"{reader.GetName(i)}\t");
                         }
-                        Console.WriteLine();
-                    }
 
-                    Console.WriteLine("--------------------------------------------------\n\n\n");
+                        Console.WriteLine();
+
+                        while (reader.Read())
+                        {
+                            for (int i = 0; i < reader.FieldCount; i++)
+                            {
+                                Console.Write($"{reader[i]}\t");
+                            }
+                            Console.WriteLine();
+                        }
+
+                        Console.WriteLine("--------------------------------------------------\n\n\n");
+                    }
                 }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error retrieving data from {tableName}: {ex.Message}");
-            }
-            finally
-            {
-                dataHandler.CloseConnection();
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error retrieving data from {tableName}: {ex.Message}");
+                }
+                finally
+                {
+                    dbh.CloseConnection();
+                }
             }
         }
         #endregion

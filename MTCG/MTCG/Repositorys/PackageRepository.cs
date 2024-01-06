@@ -6,8 +6,6 @@ namespace MTCG.Repositorys
 {
     public static class PackageRepository
     {
-        private static readonly DataHandler? dataHandler = new DataHandler();
-
         public static bool PurchasePackage(string username)
         {
             User user = UserRepository.GetUserByUsername(username);
@@ -42,7 +40,10 @@ namespace MTCG.Repositorys
                 new NpgsqlParameter("@packageId", packageId)
             };
 
-            dataHandler.ExecuteNonQuery(query, parameters);
+            using (DataHandler dbh = new DataHandler())
+            {
+                dbh.ExecuteNonQuery(query, parameters);
+            }           
         }
 
         private static Package GetRandomPackage(int userId)
@@ -51,7 +52,8 @@ namespace MTCG.Repositorys
 
             var parameter = new NpgsqlParameter("@userId", userId);
 
-            using (var reader = dataHandler.ExecuteSelectQuery(query, new NpgsqlParameter[] { parameter }))
+            using (DataHandler dbh = new DataHandler())
+            using (var reader = dbh.ExecuteSelectQuery(query, new NpgsqlParameter[] { parameter }))
             {
                 if (reader != null && reader.Read())
                 {
@@ -75,7 +77,11 @@ namespace MTCG.Repositorys
                 new NpgsqlParameter("@price", p.Price)
             };
 
-            dataHandler.ExecuteNonQuery(packageQuery, packageParameters);
+            using (DataHandler dbh = new DataHandler())
+            {
+                dbh.ExecuteNonQuery(packageQuery, packageParameters);
+            }         
+
             foreach (Card card in p.Cards)
             {
                 CardRepository.CreateCard(card);
@@ -88,7 +94,10 @@ namespace MTCG.Repositorys
                     new NpgsqlParameter("@cardsid", card.CardsID)
                 };
 
-                dataHandler.ExecuteNonQuery(cardsQuery, cardsParameters);
+                using (DataHandler dbh = new DataHandler())
+                {
+                    dbh.ExecuteNonQuery(cardsQuery, cardsParameters);
+                }        
             }
         }
     }

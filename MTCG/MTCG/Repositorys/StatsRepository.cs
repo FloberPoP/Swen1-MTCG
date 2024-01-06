@@ -7,14 +7,14 @@ namespace MTCG.Repositorys
 {
     public static class StatsRepository
     {
-        private static readonly DataHandler? dataHandler = new DataHandler();
         public static int GetTotalGames(int userID)
         {
             string query = "SELECT COUNT(*) as TotalGames FROM BattleLogs WHERE WinnerID = @userID OR LoserID = @userID";
 
             var parameter = new NpgsqlParameter("@userID", userID);
 
-            using (var reader = dataHandler.ExecuteSelectQuery(query, new NpgsqlParameter[] { parameter }))
+            using (DataHandler dbh = new DataHandler())
+            using (var reader = dbh.ExecuteSelectQuery(query, new NpgsqlParameter[] { parameter }))
             {
                 if (reader != null && reader.Read())
                 {
@@ -31,7 +31,8 @@ namespace MTCG.Repositorys
 
             var parameter = new NpgsqlParameter("@userID", userID);
 
-            using (var reader = dataHandler.ExecuteSelectQuery(query, new NpgsqlParameter[] { parameter }))
+            using (DataHandler dbh = new DataHandler())
+            using (var reader = dbh.ExecuteSelectQuery(query, new NpgsqlParameter[] { parameter }))
             {
                 if (reader != null && reader.Read())
                 {
@@ -48,7 +49,8 @@ namespace MTCG.Repositorys
 
             var parameter = new NpgsqlParameter("@userID", userID);
 
-            using (var reader = dataHandler.ExecuteSelectQuery(query, new NpgsqlParameter[] { parameter }))
+            using (DataHandler dbh = new DataHandler())
+            using (var reader = dbh.ExecuteSelectQuery(query, new NpgsqlParameter[] { parameter }))
             {
                 if (reader != null && reader.Read())
                 {
@@ -65,7 +67,8 @@ namespace MTCG.Repositorys
 
             var parameter = new NpgsqlParameter("@userID", userID);
 
-            using (var reader = dataHandler.ExecuteSelectQuery(query, new NpgsqlParameter[] { parameter }))
+            using (DataHandler dbh = new DataHandler())
+            using (var reader = dbh.ExecuteSelectQuery(query, new NpgsqlParameter[] { parameter }))
             {
                 if (reader != null && reader.Read())
                 {
@@ -83,7 +86,8 @@ namespace MTCG.Repositorys
 
             var parameter = new NpgsqlParameter("@username", username);
 
-            using (NpgsqlDataReader reader = (NpgsqlDataReader)dataHandler.ExecuteSelectQuery(query, new NpgsqlParameter[] { parameter }))
+            using (DataHandler dbh = new DataHandler())
+            using (NpgsqlDataReader reader = dbh.ExecuteSelectQuery(query, new NpgsqlParameter[] { parameter }))
             {
                 if (reader.Read())
                 {
@@ -99,8 +103,8 @@ namespace MTCG.Repositorys
             string query = "SELECT Username, Elo FROM Users ORDER BY Elo DESC";
 
             List<UserScoreboardEntry> scoreboard = new List<UserScoreboardEntry>();
-
-            using (var reader = dataHandler.ExecuteSelectQuery(query, null))
+            using (DataHandler dbh = new DataHandler())
+            using (var reader = dbh.ExecuteSelectQuery(query, null))
             {
                 while (reader != null && reader.Read())
                 {
@@ -130,7 +134,10 @@ namespace MTCG.Repositorys
                 new NpgsqlParameter("@draw", log.Draw)
             };
 
-            dataHandler.ExecuteNonQuery(query, parameters);
+            using (DataHandler dbh = new DataHandler())
+            {
+                dbh.ExecuteNonQuery(query, parameters);
+            }
         }
     }
 }

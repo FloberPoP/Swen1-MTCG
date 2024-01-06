@@ -22,17 +22,14 @@ namespace MTCG.Battling
             List<Card> deckA = playerA.Deck;
             List<Card> deckB = playerB.Deck;
 
-            // Battle for up to 100 rounds
             for (int round = 1; round <= MaxRounds; round++)
             {;
-                // Draw cards from the decks for the current round
                 Card cardA = DrawCard(deckA);
                 Card cardB = DrawCard(deckB);    
                 
                 int damageA = CalculateBuffDamage(playerA, playerB, cardA, cardB);               
                 int damageB = CalculateBuffDamage(playerB, playerA, cardB, cardA);
 
-                // Determine the winner of the round
                 if (damageA > damageB)
                 {
                     deckB.Remove(cardB);
@@ -134,6 +131,9 @@ namespace MTCG.Battling
 
             int newEloA = winner.Elo + (int)(kFactor * (1 - expectedWinProbabilityA));
             int newEloB = loser.Elo + (int)(kFactor * (0 - expectedWinProbabilityB));
+
+            newEloA = (newEloA <= 0) ? 0 : newEloA;
+            newEloB = (newEloB <= 0) ? 0 : newEloB;
 
             winner.Elo = newEloA;
             loser.Elo = newEloB;

@@ -1,6 +1,4 @@
-﻿using MTCG.Model;
-
-namespace MTCGTests
+﻿namespace MTCGTests
 {
     [TestClass]
     public class RepoTests

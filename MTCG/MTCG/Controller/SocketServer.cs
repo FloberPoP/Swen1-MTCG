@@ -31,6 +31,7 @@ namespace MTCG.Controller
             {
                 Socket clientSocket = serverSocket.Accept();
                 Task.Run(() => HandleClient(clientSocket));
+                //HandleClient(clientSocket);
             }
         }
 
@@ -598,7 +599,6 @@ namespace MTCG.Controller
                 Console.WriteLine(tradeID);
                 if (tradeID == -1)
                 {
-                    // Normal POST request without trade ID in the URL
                     TradeRequirement tradeOffer = JsonConvert.DeserializeObject<TradeRequirement>(ServerController.GetJasonPart(request));
                     tradeOffer.UsersID = user.UserID;
 
@@ -633,19 +633,16 @@ namespace MTCG.Controller
 
                     TradeRequirement tradeOffer = TradingRepository.GetTradebyTradID(tradeID);
 
-                    // Check if the trade exists
                     if (tradeOffer == null)
                     {
                         clientResponse.ResponseString = "Trade not found.";
                         clientResponse.StatusCode = (int)HttpStatusCode.NotFound;
                     }
-                    // Check if the trader is not the same person as the trade acceptor
                     else if (tradeOffer.UsersID == user.UserID)
                     {
                         clientResponse.ResponseString = "You cannot accept your own trade offer.";
                         clientResponse.StatusCode = (int)HttpStatusCode.BadRequest;
                     }
-                    // Check if user has this card
                     else if (!StackRepository.AreCardsInUserStack(user.UserID, new List<int> { acceptingCardID }))
                     {
                         clientResponse.ResponseString = "You don't own the Card";
@@ -661,7 +658,6 @@ namespace MTCG.Controller
                         clientResponse.ResponseString = "Card to Trade is already Trading";
                         clientResponse.StatusCode = (int)HttpStatusCode.Conflict;
                     }
-                    // Check if the card has all the requirements
                     else if (!CardRepository.IsCardEligibleForTrade(acceptingCardID, tradeOffer.CardRegion, tradeOffer.CardType, tradeOffer.MinimumDamage))
                     {
                         clientResponse.ResponseString = "The provided card does not meet the trade requirements.";
@@ -669,7 +665,6 @@ namespace MTCG.Controller
                     }
                     else
                     {
-                        // Process the trade acceptance
                         TradingRepository.AcceptTrade(tradeID, acceptingCardID, user.UserID);
                         clientResponse.ResponseString = "Trade accepted.";
                     }           
@@ -737,7 +732,7 @@ namespace MTCG.Controller
                 cr.StatusCode = (int)HttpStatusCode.Unauthorized;
             }
             
-            if(UserRepository.GetUserByUsername(ServerController.GetUserNameFromToken(token)) == null)
+            if (UserRepository.GetUserByUsername(ServerController.GetUserNameFromToken(token)) == null)
             {
                 cr.ResponseString = "Unauthorized: Invalid token.";
                 cr.StatusCode = (int)HttpStatusCode.Unauthorized;

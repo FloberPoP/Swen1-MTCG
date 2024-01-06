@@ -11,3 +11,7 @@ string password = "debian123";
 Für Testing in Seed gibt es folgende Methoden:
 ClearDatabase(); -> Cleared die DB
 PrintTableContents(); -> GIbt alle Tabellen + inhalt aus
+Vor und nach Unittests wird DB automatisch gecleared
+
+Git:
+https://github.com/FloberPoP/Swen1-MTCG.git

@@ -15,7 +15,6 @@ At the beginning I used the HTTP Listener but I wasn't sure as it's not really a
 In total:
 I should have started with the Model Classes and the Server and not prioritising the Battle Logic cause i wanted to do my own Battle but it became too complicated so that's why I revised it and in the end i and finally I added my unique feature and tested everything
 
-
 unique feature: 
 If a player has more than 3 cards with the same region and plays one of them, it gets a bonus that depends on the region.
 
@@ -78,7 +77,7 @@ Testing for no unforeseen Exception
     public void TestDeckRepositoryWithInvalidCardID()
 
 # time spent
-39 Commits:
+46 Commits:
 ~69.5 h
 
 # link to git:

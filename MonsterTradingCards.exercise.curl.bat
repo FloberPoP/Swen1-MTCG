@@ -191,8 +191,9 @@ echo.
 REM --------------------------------------------------
 echo 17) battle
 start /b "kienboec battle" curl -X POST http://localhost:10001/battles --header "Authorization: Bearer kienboec-mtcgToken" -d ""
+ping localhost -n 5 >NUL 2>NUL
 start /b "altenhof battle" curl -X POST http://localhost:10001/battles --header "Authorization: Bearer altenhof-mtcgToken" -d ""
-ping localhost -n 10 >NUL 2>NUL
+ping localhost -n 5 >NUL 2>NUL
 
 REM --------------------------------------------------
 echo 18) Stats 

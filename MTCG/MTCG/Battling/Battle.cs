@@ -1,7 +1,5 @@
 ﻿using MTCG.Model;
 using MTCG.Repositorys;
-using System.Diagnostics.Metrics;
-using System.Threading;
 
 namespace MTCG.Battling
 { 
@@ -129,7 +127,7 @@ namespace MTCG.Battling
         {
             int kFactor = 10;
 
-            updateELoMutex.WaitOne(); // Acquire the mutex
+            updateELoMutex.WaitOne();
 
             try
             {
@@ -150,7 +148,7 @@ namespace MTCG.Battling
             }
             finally
             {
-                updateELoMutex.ReleaseMutex(); // Release the mutex
+                updateELoMutex.ReleaseMutex();
             }
         }
     }

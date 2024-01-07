@@ -1,8 +1,10 @@
 ﻿using MTCG.Model;
 using MTCG.Repositorys;
+using System.Diagnostics.Metrics;
+using System.Threading;
 
 namespace MTCG.Battling
-{
+{ 
     public class Battle
     {
         private User? winner;
@@ -10,6 +12,7 @@ namespace MTCG.Battling
         private const int MaxRounds = 100;
         private const int BuffThreshold = 3;
         private const int BuffDamage = 10;
+        private static readonly Mutex updateELoMutex = new Mutex();
         BattleLog log;
 
         public Battle()
@@ -121,25 +124,34 @@ namespace MTCG.Battling
             }
             return damage;            
         }
-           
+
         public void UpdateUserElo(User winner, User loser)
         {
             int kFactor = 10;
 
-            double expectedWinProbabilityA = 1 / (1 + Math.Pow(10, (loser.Elo - winner.Elo) / 400.0));
-            double expectedWinProbabilityB = 1 / (1 + Math.Pow(10, (winner.Elo - loser.Elo) / 400.0));
+            updateELoMutex.WaitOne(); // Acquire the mutex
 
-            int newEloA = winner.Elo + (int)(kFactor * (1 - expectedWinProbabilityA));
-            int newEloB = loser.Elo + (int)(kFactor * (0 - expectedWinProbabilityB));
+            try
+            {
+                double expectedWinProbabilityA = 1 / (1 + Math.Pow(10, (loser.Elo - winner.Elo) / 400.0));
+                double expectedWinProbabilityB = 1 / (1 + Math.Pow(10, (winner.Elo - loser.Elo) / 400.0));
 
-            newEloA = (newEloA <= 0) ? 0 : newEloA;
-            newEloB = (newEloB <= 0) ? 0 : newEloB;
+                int newEloA = winner.Elo + (int)(kFactor * (1 - expectedWinProbabilityA));
+                int newEloB = loser.Elo + (int)(kFactor * (0 - expectedWinProbabilityB));
 
-            winner.Elo = newEloA;
-            loser.Elo = newEloB;
+                newEloA = (newEloA <= 0) ? 0 : newEloA;
+                newEloB = (newEloB <= 0) ? 0 : newEloB;
 
-            UserRepository.UpdateUser(winner);
-            UserRepository.UpdateUser(loser);
+                winner.Elo = newEloA;
+                loser.Elo = newEloB;
+
+                UserRepository.UpdateUser(winner);
+                UserRepository.UpdateUser(loser);
+            }
+            finally
+            {
+                updateELoMutex.ReleaseMutex(); // Release the mutex
+            }
         }
     }
 }
